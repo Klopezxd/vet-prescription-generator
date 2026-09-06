@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+venv/
+.venv/
+env/
+
+# Documentos y registros emitidos (Privacidad médica)
+Recetas_Word/
+Recetas_PDF/
+contador_recetas.txt
+
+# Plantilla real con credenciales personales
+plantilla_receta.docx
+
+# Temporales de Office
+~$*.docx
+*.tmp
+
+# IDEs
+.vscode/
+.idea/
+*.swp
