@@ -2,11 +2,12 @@
 Servidor API REST y renderizador web con FastAPI para el Generador de Recetas Veterinarias.
 """
 
+import sys
 from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
@@ -24,11 +25,17 @@ app = FastAPI(
 )
 
 # Servir archivos estáticos y plantillas
-static_dir = Path(__file__).resolve().parent / "static"
-templates_dir = Path(__file__).resolve().parent / "templates"
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    bundle_base = Path(sys._MEIPASS)
+    static_dir = bundle_base / "src" / "static"
+    templates_dir = bundle_base / "src" / "templates"
+else:
+    static_dir = Path(__file__).resolve().parent / "static"
+    templates_dir = Path(__file__).resolve().parent / "templates"
 
 app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 templates = Jinja2Templates(directory=str(templates_dir))
+
 
 
 class PrescriptionCreate(BaseModel):
@@ -60,7 +67,8 @@ class VetConfigUpdate(BaseModel):
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request) -> HTMLResponse:
     """Ruta principal que sirve la interfaz interactiva."""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="index.html")
+
 
 
 @app.get("/api/next-number")
@@ -137,3 +145,18 @@ async def update_configuration(cfg: VetConfigUpdate) -> dict[str, str]:
     """Actualiza los datos del médico veterinario y establecimiento."""
     db.save_vet_config(cfg.model_dump())
     return {"status": "success", "message": "Configuración actualizada"}
+
+
+@app.get("/api/backup-db")
+async def backup_database():
+    """Descarga una copia de seguridad directa de la base de datos SQLite."""
+    from datetime import date
+    if config.db_path.exists():
+        fecha = date.today().strftime("%Y_%m_%d")
+        return FileResponse(
+            path=str(config.db_path),
+            filename=f"recetas_backup_{fecha}.db",
+            media_type="application/x-sqlite3",
+        )
+    raise HTTPException(status_code=404, detail="Aún no existe base de datos de recetas")
+
