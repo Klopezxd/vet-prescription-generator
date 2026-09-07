@@ -101,11 +101,11 @@ public static class Program
         {
             try
             {
-                // Iniciar mediante el shell de Windows para integrarse con la instancia activa sin errores de Singleton ni bloqueos
+                // Iniciar mediante el shell de Windows maximizado desde el inicio sin distorsión
                 var psi = new ProcessStartInfo
                 {
                     FileName = "cmd.exe",
-                    Arguments = $"/c start \"\" \"{browserExe}\" --app={url} --window-size=1300,850",
+                    Arguments = $"/c start \"\" /max \"{browserExe}\" --app={url} --start-maximized",
                     CreateNoWindow = true,
                     UseShellExecute = false
                 };
@@ -121,7 +121,8 @@ public static class Program
             Process.Start(new ProcessStartInfo
             {
                 FileName = url,
-                UseShellExecute = true
+                UseShellExecute = true,
+                WindowStyle = ProcessWindowStyle.Maximized
             });
         }
         catch { }
