@@ -516,12 +516,9 @@ async function restaurarBaseDatos() {
     }
 }
 
-// 11. Heartbeat y Cierre Limpio de la Aplicación de Escritorio
+// 11. Heartbeat de la Aplicación de Escritorio
 setInterval(() => {
     fetch('/api/heartbeat').catch(() => {});
-}, 2500);
+}, 2000);
 
-window.addEventListener('beforeunload', () => {
-    navigator.sendBeacon('/api/shutdown');
-});
 
