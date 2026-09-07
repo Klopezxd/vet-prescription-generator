@@ -204,3 +204,51 @@ class DatabaseManager:
                 (limit,)
             )
             return [dict(row) for row in cursor.fetchall()]
+
+    def get_prescription_by_id(self, recipe_id: int) -> dict[str, Any] | None:
+        """Obtiene una receta por su ID numérico primario."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM recetas WHERE id = ?", (recipe_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def get_prescription_by_number(self, recipe_number: str) -> dict[str, Any] | None:
+        """Obtiene una receta por su código secuencial formateado (ej: 0001)."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM recetas WHERE numero_receta = ?", (recipe_number,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def get_vet_config(self) -> dict[str, str]:
+        """Obtiene los datos guardados del médico veterinario y establecimiento."""
+        keys = [
+            "veterinario_nombre",
+            "veterinario_cedula",
+            "veterinario_senescyt",
+            "veterinario_telefono",
+            "establecimiento_nombre",
+        ]
+        result = {k: "" for k in keys}
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT key, value FROM app_metadata WHERE key LIKE 'veterinario_%' OR key = 'establecimiento_nombre'")
+            for row in cursor.fetchall():
+                result[row["key"]] = row["value"]
+        return result
+
+    def save_vet_config(self, config_dict: dict[str, str]) -> None:
+        """Guarda o actualiza los datos del profesional prescriptor."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            for key, val in config_dict.items():
+                cursor.execute(
+                    """
+                    INSERT INTO app_metadata (key, value) VALUES (?, ?)
+                    ON CONFLICT(key) DO UPDATE SET value = excluded.value
+                    """,
+                    (key, str(val).strip())
+                )
+            conn.commit()
+

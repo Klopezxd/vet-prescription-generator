@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Recetas Veterinarias - Agrocalidad Ecuador</title>
+    <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+
+    <!-- Barra de Navegación -->
+    <header class="navbar">
+        <div class="navbar-brand">
+            <span>🐾 Recetario Veterinario</span>
+            <span class="navbar-badge">Normativa Agrocalidad Ecuador</span>
+        </div>
+        <nav class="nav-tabs">
+            <button class="nav-tab active" id="tab-emitir" onclick="switchTab('emitir')">📝 Nueva Receta</button>
+            <button class="nav-tab" id="tab-historial" onclick="switchTab('historial')">📋 Libro de Registro / Historial</button>
+            <button class="nav-tab" id="tab-config" onclick="switchTab('config')">⚙️ Datos del Veterinario</button>
+        </nav>
+    </header>
+
+    <!-- Vista 1: Emisión y Vista Previa en Vivo -->
+    <main class="main-container" id="view-emitir">
+        
+        <!-- Panel Izquierdo: Formulario de Entrada -->
+        <section class="left-panel">
+            <form id="recipe-form" onsubmit="event.preventDefault(); emitirReceta();">
+
+                <!-- 1. Fecha de Emisión -->
+                <div class="form-card">
+                    <div class="form-card-title">📅 Fecha de Emisión</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="input-dia">Día</label>
+                            <input type="text" id="input-dia" class="form-input" maxlength="2" placeholder="DD" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-mes">Mes</label>
+                            <input type="text" id="input-mes" class="form-input" maxlength="2" placeholder="MM" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-anio">Año</label>
+                            <input type="text" id="input-anio" class="form-input" maxlength="4" placeholder="AAAA" required>
+                        </div>
+                        <div class="form-group" style="justify-content: flex-end;">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setTodayDate()">Hoy</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Información del Paciente -->
+                <div class="form-card">
+                    <div class="form-card-title">🐾 Información del Paciente</div>
+                    
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label for="input-especie">Especie Animal</label>
+                        <input type="text" id="input-especie" class="form-input" placeholder="Ej: Canino, Bovino, Porcino..." required>
+                        <div class="species-chips">
+                            <button type="button" class="chip-btn" onclick="setSpecies('Canino')">Canino</button>
+                            <button type="button" class="chip-btn" onclick="setSpecies('Felino')">Felino</button>
+                            <button type="button" class="chip-btn" onclick="setSpecies('Bovino')">Bovino</button>
+                            <button type="button" class="chip-btn" onclick="setSpecies('Porcino')">Porcino</button>
+                            <button type="button" class="chip-btn" onclick="setSpecies('Equino')">Equino</button>
+                            <button type="button" class="chip-btn" onclick="setSpecies('Aves')">Aves</button>
+                            <button type="button" class="chip-btn" onclick="setSpecies('Ovino')">Ovino</button>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 2;">
+                            <label for="input-nombre-paciente">Nombre / Identificador del Animal</label>
+                            <input type="text" id="input-nombre-paciente" class="form-input" placeholder="Ej: Firulais / Arete 104">
+                        </div>
+                        <div class="form-group" style="justify-content: flex-end; padding-bottom: 5px;">
+                            <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; cursor: pointer;">
+                                <input type="checkbox" id="chk-no-aplica" onchange="toggleNoAplicaNombre()"> No aplica
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="input-sexo">Sexo</label>
+                            <select id="input-sexo" class="form-select">
+                                <option value="Macho">Macho</option>
+                                <option value="Hembra">Hembra</option>
+                                <option value="Indeterminado">Indeterminado / Lote</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-edad">Edad</label>
+                            <input type="text" id="input-edad" class="form-input" placeholder="Ej: 2 años / 4 meses">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Información del Propietario -->
+                <div class="form-card">
+                    <div class="form-card-title">👤 Información del Propietario / Tenedor</div>
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label for="input-nombre-prop">Nombres y Apellidos del Propietario</label>
+                        <input type="text" id="input-nombre-prop" class="form-input" placeholder="Ej: Juan Pérez" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-dir-prop">Dirección Domiciliaria / Finca / Parroquia</label>
+                        <input type="text" id="input-dir-prop" class="form-input" placeholder="Ej: Barrio Central / Hacienda La Paz">
+                    </div>
+                </div>
+
+                <!-- 4. Tratamiento Médico Veterinario -->
+                <div class="form-card">
+                    <div class="form-card-title">💊 Tratamiento Médico (Normativa Agrocalidad)</div>
+                    
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label for="input-prescripcion">Prescripción (Principio activo, forma farmacéutica, concentración y unidades)</label>
+                        <textarea id="input-prescripcion" class="form-textarea" placeholder="Ej: Oxitetraciclina 200 mg/ml (Solución inyectable), Frasco x 100 ml (1 unidad)" rows="2" required></textarea>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label for="input-diagnostico">Diagnóstico Presuntivo / Clínico</label>
+                        <textarea id="input-diagnostico" class="form-textarea" placeholder="Ej: Neumonía bacteriana aguda / Control antiparasitario" rows="2"></textarea>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label for="input-posologia">Posología (Vía, unidades a administrar por unidad de tiempo y duración)</label>
+                        <textarea id="input-posologia" class="form-textarea" placeholder="Ej: 1 ml por cada 10 kg de peso vía intramuscular profunda, cada 48 horas por 3 dosis." rows="2" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label for="input-instrucciones">Instrucciones / Observaciones para el paciente</label>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setSinNovedades()">Sin novedades</button>
+                        </div>
+                        <textarea id="input-instrucciones" class="form-textarea" placeholder="Ej: Respetar tiempo de retiro de carne (28 días) y leche (7 días)." rows="2"></textarea>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="limpiarFormulario()">🧹 Limpiar</button>
+                    <button type="submit" class="btn btn-primary">🖨️ EMITIR E IMPRIMIR RECETA</button>
+                </div>
+
+            </form>
+        </section>
+
+        <!-- Panel Derecho: Vista Previa en Vivo (Formato Oficial Agrocalidad) -->
+        <section class="right-panel">
+            <div class="preview-toolbar">
+                <div class="preview-title">
+                    <span>📄 Vista Previa en Vivo (Hoja A4 Horizontal)</span>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Imprimir Vista Previa</button>
+            </div>
+
+            <!-- HOJA FÍSICA AGROCALIDAD (2 CUERPOS LADO A LADO) -->
+            <div class="prescription-sheet" id="printable-sheet">
+                
+                <!-- ==================== CUERPO 1: ALMACENISTA ==================== -->
+                <div class="body-half">
+                    
+                    <!-- Encabezado Fecha y Número -->
+                    <div class="header-grid">
+                        <div class="box-fecha">
+                            <div class="box-fecha-label">Fecha de<br>emisión</div>
+                            <div class="box-fecha-cols">
+                                <div class="date-col">
+                                    <div class="date-title">Día</div>
+                                    <div class="date-value" id="prev-c1-dia">--</div>
+                                </div>
+                                <div class="date-col">
+                                    <div class="date-title">Mes</div>
+                                    <div class="date-value" id="prev-c1-mes">--</div>
+                                </div>
+                                <div class="date-col">
+                                    <div class="date-title">Año</div>
+                                    <div class="date-value" id="prev-c1-anio">----</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="box-numero">
+                            <div class="box-numero-label">Número de receta</div>
+                            <div class="box-numero-val" id="prev-c1-num">0001</div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla Información del prescriptor / médico veterinario -->
+                    <table class="agro-table">
+                        <thead>
+                            <tr>
+                                <th colspan="2" class="table-header">Información del prescriptor / médico veterinario</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="width: 38%; font-weight: 600;">Nombres y apellidos:</td>
+                                <td id="prev-vet-nombre">--</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Cédula de identidad:</td>
+                                <td id="prev-vet-cedula">--</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">N° Registro SENESCYT:</td>
+                                <td id="prev-vet-senescyt">--</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Teléfono:</td>
+                                <td id="prev-vet-telefono">--</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Caja de Prescripción -->
+                    <div class="content-box">
+                        <div class="content-box-title">
+                            Prescripción
+                            <div class="content-box-subtitle">(Principio activo, forma farmacéutica, concentración y número de unidades por envase)</div>
+                        </div>
+                        <div class="content-box-body" id="prev-prescripcion"></div>
+                    </div>
+
+                    <!-- Caja de Diagnóstico -->
+                    <div class="content-box">
+                        <div class="content-box-title">Diagnóstico</div>
+                        <div class="content-box-body" id="prev-diagnostico"></div>
+                    </div>
+
+                    <!-- Cuadro de Firmas -->
+                    <div class="signature-box">
+                        <div class="signature-half">Firma del Médico Veterinario</div>
+                        <div class="signature-half">Sello del Médico Veterinario.</div>
+                    </div>
+
+                    <!-- Pie oficial Cuerpo 1 -->
+                    <div class="body-footer-label">Cuerpo 1 original: Almacenista</div>
+                </div>
+
+                <!-- ==================== CUERPO 2: PROPIETARIO ==================== -->
+                <div class="body-half">
+                    
+                    <!-- Encabezado Fecha y Número -->
+                    <div class="header-grid">
+                        <div class="box-fecha">
+                            <div class="box-fecha-label">Fecha de<br>emisión</div>
+                            <div class="box-fecha-cols">
+                                <div class="date-col">
+                                    <div class="date-title">Día</div>
+                                    <div class="date-value" id="prev-c2-dia">--</div>
+                                </div>
+                                <div class="date-col">
+                                    <div class="date-title">Mes</div>
+                                    <div class="date-value" id="prev-c2-mes">--</div>
+                                </div>
+                                <div class="date-col">
+                                    <div class="date-title">Año</div>
+                                    <div class="date-value" id="prev-c2-anio">----</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="box-numero">
+                            <div class="box-numero-label">Número de receta</div>
+                            <div class="box-numero-val" id="prev-c2-num">0001</div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla Información del paciente -->
+                    <table class="agro-table">
+                        <thead>
+                            <tr>
+                                <th colspan="4" class="table-header">Información del paciente</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="width: 25%; font-weight: 600;">Especie:</td>
+                                <td colspan="3" id="prev-especie">--</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Nombre/Identificación:</td>
+                                <td colspan="3" id="prev-nombre-paciente">--</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Sexo:</td>
+                                <td style="width: 25%;" id="prev-sexo">Macho</td>
+                                <td style="width: 20%; font-weight: 600;">Edad:</td>
+                                <td id="prev-edad">--</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Nombre del propietario:</td>
+                                <td colspan="3" id="prev-nombre-prop">--</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600;">Dirección propietario:</td>
+                                <td colspan="3" id="prev-dir-prop">--</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Caja de Posología -->
+                    <div class="content-box">
+                        <div class="content-box-title">
+                            Posología
+                            <div class="content-box-subtitle">(Vía de administración, unidades a administrar por unidad de tiempo, duración del tratamiento)</div>
+                        </div>
+                        <div class="content-box-body" id="prev-posologia"></div>
+                    </div>
+
+                    <!-- Caja de Instrucciones para el paciente -->
+                    <div class="content-box">
+                        <div class="content-box-title">Instrucciones para el paciente</div>
+                        <div class="content-box-body" id="prev-instrucciones">Sin novedades</div>
+                    </div>
+
+                    <!-- Cuadro de Firmas -->
+                    <div class="signature-box">
+                        <div class="signature-half">Firma del Médico Veterinario</div>
+                        <div class="signature-half">Sello del Médico Veterinario</div>
+                    </div>
+
+                    <!-- Pie oficial Cuerpo 2 -->
+                    <div class="body-footer-label">Cuerpo 2: Propietario del animal</div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Vista 2: Libro de Registro e Historial (Auditoría Agrocalidad) -->
+    <section class="view-section" id="view-historial">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div>
+                <h2 style="font-size: 1.4rem; color: #1e293b;">📋 Libro de Recetas Emitidas (Auditoría)</h2>
+                <p style="color: #64748b; font-size: 0.9rem;">Registro histórico permanente conforme al protocolo de inspección de Agrocalidad.</p>
+            </div>
+            <div style="width: 320px;">
+                <input type="text" id="search-input" class="form-input" placeholder="🔍 Buscar por cliente, paciente o N° receta..." oninput="buscarRecetas()">
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">N° Receta</th>
+                        <th style="width: 110px;">Fecha</th>
+                        <th>Propietario</th>
+                        <th>Paciente / Especie</th>
+                        <th>Prescripción</th>
+                        <th style="width: 110px; text-align: center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body">
+                    <tr>
+                        <td colspan="6" class="empty-state">Cargando historial de recetas...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Vista 3: Configuración del Veterinario -->
+    <section class="view-section" id="view-config">
+        <div style="max-width: 650px; margin: 0 auto;">
+            <div style="margin-bottom: 1.5rem;">
+                <h2 style="font-size: 1.4rem; color: #1e293b;">⚙️ Datos del Profesional Prescriptor</h2>
+                <p style="color: #64748b; font-size: 0.9rem;">Esta información aparecerá automáticamente en el <strong>Cuerpo 1 (Almacenista)</strong> de todas las recetas emitidas.</p>
+            </div>
+
+            <form id="config-form" onsubmit="event.preventDefault(); guardarConfiguracion();">
+                <div class="form-card">
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="cfg-vet-nombre">Nombres y Apellidos del Médico Veterinario</label>
+                        <input type="text" id="cfg-vet-nombre" class="form-input" placeholder="Ej: Dr. Carlos López M." required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="cfg-vet-cedula">Cédula de Identidad</label>
+                        <input type="text" id="cfg-vet-cedula" class="form-input" placeholder="Ej: 1712345678" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="cfg-vet-senescyt">N° de Registro SENESCYT</label>
+                        <input type="text" id="cfg-vet-senescyt" class="form-input" placeholder="Ej: 1005-2018-123456" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="cfg-vet-telefono">Teléfono de Contacto</label>
+                        <input type="text" id="cfg-vet-telefono" class="form-input" placeholder="Ej: 0991234567">
+                    </div>
+                    <div class="form-group">
+                        <label for="cfg-establecimiento">Nombre del Establecimiento / Agropecuaria</label>
+                        <input type="text" id="cfg-establecimiento" class="form-input" placeholder="Ej: Agroveterinaria San José">
+                    </div>
+                </div>
+
+                <div style="text-align: right;">
+                    <button type="submit" class="btn btn-primary" style="display: inline-flex; width: auto; padding: 0.75rem 2rem;">
+                        💾 Guardar Configuración
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Script de Reactividad y Control -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
