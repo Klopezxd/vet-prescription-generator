@@ -10,10 +10,13 @@ venv/
 .venv/
 env/
 
-# Documentos y registros emitidos (Privacidad médica)
+# Documentos y registros emitidos (Privacidad médica y comercial)
 Recetas_Word/
 Recetas_PDF/
 contador_recetas.txt
+recetas.db
+*.db
+*.sqlite3
 
 # Plantilla real con credenciales personales
 plantilla_receta.docx
