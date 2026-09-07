@@ -19,7 +19,7 @@ from src.gui import PrescriptionGUI
 def main() -> None:
     """Inicializa la ventana principal de la aplicación."""
     root = tk.Tk()
-    app = PrescriptionGUI(root)
+    _app = PrescriptionGUI(root)
     root.mainloop()
 
 

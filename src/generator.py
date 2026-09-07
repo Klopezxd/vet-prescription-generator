@@ -5,9 +5,8 @@ Aplica principios de Clean Code, separación de responsabilidades y manejo de er
 
 import logging
 import zipfile
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Optional, Tuple
 
 from src.config import AppConfig
 
@@ -36,7 +35,7 @@ class PrescriptionData:
     posologia: str
     instrucciones: str
 
-    def to_template_dict(self, recipe_number_str: str) -> Dict[str, str]:
+    def to_template_dict(self, recipe_number_str: str) -> dict[str, str]:
         """Convierte los datos al diccionario de sustitución de placeholders."""
         return {
             "DIA": self.dia.strip(),
@@ -61,15 +60,15 @@ class GenerationResult:
     """Resultado de la emisión de una receta."""
     recipe_number: str
     docx_path: Path
-    pdf_path: Optional[Path] = None
+    pdf_path: Path | None = None
     pdf_converted: bool = False
-    warning_message: Optional[str] = None
+    warning_message: str | None = None
 
 
 class PrescriptionEngine:
     """Orquestador de lectura de plantilla, inyección de variables y exportación."""
 
-    def __init__(self, config: Optional[AppConfig] = None) -> None:
+    def __init__(self, config: AppConfig | None = None) -> None:
         self.config = config or AppConfig()
 
     def ensure_directories(self) -> None:
@@ -97,7 +96,7 @@ class PrescriptionEngine:
 
         return current_number
 
-    def render_docx(self, template_path: Path, output_path: Path, replacements: Dict[str, str]) -> None:
+    def render_docx(self, template_path: Path, output_path: Path, replacements: dict[str, str]) -> None:
         """Lee la plantilla DOCX e inyecta las variables reemplazando los placeholders en el XML."""
         with zipfile.ZipFile(template_path, "r") as zin:
             with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED) as zout:
@@ -110,7 +109,7 @@ class PrescriptionEngine:
                         data = xml.encode("utf-8")
                     zout.writestr(item, data)
 
-    def convert_to_pdf(self, docx_path: Path, pdf_path: Path) -> Tuple[bool, Optional[str]]:
+    def convert_to_pdf(self, docx_path: Path, pdf_path: Path) -> tuple[bool, str | None]:
         """Convierte el documento DOCX a PDF usando docx2pdf (requiere Microsoft Word en Windows)."""
         try:
             from docx2pdf import convert
