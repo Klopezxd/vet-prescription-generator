@@ -448,7 +448,8 @@
             <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
             <h3 style="font-size: 1.35rem; color: #15803d; margin-bottom: 0.25rem;">¡Receta Emitida y Guardada con Éxito!</h3>
             <p style="color: #64748b; font-size: 0.92rem; margin-bottom: 1.25rem;">
-                La <strong>Receta N° <span id="modal-receta-num" style="color: #0f172a; font-size: 1.1rem; text-decoration: underline;"></span></strong> ha sido registrada en el libro oficial de Agrocalidad y guardada en la base de datos local.
+                La <strong>Receta N° <span id="modal-receta-num" style="color: #0f172a; font-size: 1.15rem; text-decoration: underline;"></span></strong> ha sido registrada en el libro oficial de Agrocalidad y la base de datos local.<br>
+                <span style="font-size: 0.85rem; color: #16a34a; font-weight: 600;">✨ El formulario se limpió automáticamente para la próxima receta.</span>
             </p>
 
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.9rem 1.1rem; margin-bottom: 1.5rem; text-align: left; font-size: 0.88rem; display: flex; flex-direction: column; gap: 0.35rem;">
@@ -457,12 +458,15 @@
                 <div>📅 <strong>Fecha:</strong> <span id="modal-fecha-emision">--</span></div>
             </div>
 
-            <div style="display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap;">
+            <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
                 <button type="button" class="btn btn-primary" onclick="cerrarModalNuevaReceta()" style="flex: 1.5; min-width: 170px;">
-                    📝 Nueva Receta
+                    ✨ Nueva Receta (Limpia)
                 </button>
-                <button type="button" class="btn btn-secondary" onclick="irAHistorialDesdeModal()" style="flex: 1.2; min-width: 150px;">
-                    📋 Ver en Historial
+                <button type="button" class="btn btn-secondary" onclick="conservarPropietarioModal()" style="flex: 1.5; min-width: 170px;" title="Mantener los datos del propietario para recetar otro medicamento">
+                    👤 Mismo Propietario
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="irAHistorialDesdeModal()" style="flex: 1.2; min-width: 140px;">
+                    📋 Ver Historial
                 </button>
                 <button type="button" class="btn btn-secondary" onclick="reimprimirDesdeModal()" style="width: auto; padding: 0.75rem 1rem;" title="Volver a abrir el diálogo de impresión">
                     🖨️ Reimprimir
