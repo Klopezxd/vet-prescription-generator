@@ -109,17 +109,27 @@ pip install -r requirements.txt
 
 ### 2. Ejecutar la Aplicación
 
-#### Opción A: Inicio Rápido con 1 Clic (Recomendado para Windows)
+#### Opción A: Ejecutable Portable de Escritorio (Recomendado para Usuario Final / Mostrador)
+* **100% Autónomo:** No requiere instalar Python ni librerías en la máquina de destino.
+* **Cero Consolas:** Abre directamente una ventana nativa de aplicación (`--noconsole`) con el icono oficial veterinario.
+* **Ubicación:** Haz doble clic en el archivo generado:
+  ```text
+  dist/Recetario_Agrocalidad.exe
+  ```
+  *(Puedes copiar este único archivo `.exe` al Escritorio de cualquier PC con Windows 10/11 y funcionará al instante).*
+* **Compilación:** Para regenerar el ejecutable tras cualquier cambio en el código, haz doble clic en **`build_exe.bat`**.
+
+#### Opción B: Inicio Rápido de Servidor Local (Windows)
 Haz doble clic sobre el archivo **`iniciar_recetario.bat`**. 
 El script activará el entorno virtual, iniciará el servidor local y abrirá automáticamente tu navegador en `http://localhost:8000`.
 
-#### Opción B: Inicio Manual por Terminal (Modo Web)
+#### Opción C: Inicio Manual por Terminal (Modo Web)
 ```powershell
 python -m uvicorn src.api:app --reload --host 0.0.0.0 --port 8000
 ```
 Luego abre en tu navegador: **`http://localhost:8000`**
 
-#### Opción C: Modo Clásico de Escritorio (Tkinter)
+#### Opción D: Modo Clásico de Escritorio (Tkinter)
 ```powershell
 python main.py
 ```
@@ -134,11 +144,12 @@ vet-prescription-generator/
 │   └── workflows/
 │       └── lint.yml             # Integración continua con Ruff
 ├── assets/
+│   ├── app_icon.ico             # Icono oficial veterinario multirresolución
 │   └── plantilla_ejemplo.docx   # Plantilla base sanitizada para modo Word
 ├── src/
 │   ├── __init__.py
 │   ├── api.py                   # API REST y servidor web FastAPI
-│   ├── config.py                # Rutas y configuración del sistema
+│   ├── config.py                # Rutas dinámicas y compatibilidad PyInstaller
 │   ├── database.py              # Capa de persistencia SQLite y auditoría
 │   ├── generator.py             # Motor de renderizado DOCX/PDF
 │   ├── gui.py                   # Interfaz gráfica de escritorio Tkinter
@@ -149,7 +160,9 @@ vet-prescription-generator/
 │   │       └── app.js           # Lógica interactiva y comunicación con la API
 │   └── templates/
 │       └── index.html           # Vista principal con formulario y hoja oficial
-├── iniciar_recetario.bat        # Lanzador para Windows (1 clic)
+├── build_exe.bat                # Script de compilación automática del ejecutable
+├── desktop.py                   # Lanzador de escritorio nativo (FastAPI + App Mode)
+├── iniciar_recetario.bat        # Lanzador web para Windows (1 clic)
 ├── main.py                      # Punto de entrada para el modo Tkinter
 ├── pyproject.toml               # Configuración del linter Ruff (PEP 8)
 ├── requirements.txt             # Dependencias del proyecto
@@ -157,6 +170,7 @@ vet-prescription-generator/
 ├── LICENSE                      # Licencia de código abierto PolyForm Noncommercial 1.0.0
 └── README.md                    # Documentación técnica y funcional
 ```
+
 
 ---
 

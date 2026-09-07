@@ -21,9 +21,10 @@ recetas.db
 # Plantilla real con credenciales personales
 plantilla_receta.docx
 
-# Temporales de Office
+# Temporales de Office y Logs
 ~$*.docx
 *.tmp
+*.log
 
 # IDEs
 .vscode/
