@@ -335,4 +335,33 @@ public class DatabaseTests
         Assert.IsNull(error);
         Assert.AreEqual(DateTime.Now.ToString("dd"), inputValid.Dia);
     }
+
+    [TestMethod]
+    public void Test_ReactivatePrescription_RestoresEmitidaState()
+    {
+        var (id, _) = _db.SavePrescription(new PrescriptionInput
+        {
+            Especie = "Bovino",
+            NombrePaciente = "Toro 99",
+            NombrePropietario = "Finca La Esperanza",
+            Prescripcion = "Antibiótico",
+            Posologia = "Dosis"
+        });
+
+        // 1. Anular
+        _db.CancelPrescription(id, "Anulado por error de digitación");
+        var anulada = _db.GetPrescriptionById(id);
+        Assert.IsNotNull(anulada);
+        Assert.AreEqual("ANULADA", anulada.Estado);
+        Assert.AreEqual("Anulado por error de digitación", anulada.MotivoAnulacion);
+
+        // 2. Reactivar (deshacer anulación accidental)
+        bool ok = _db.ReactivatePrescription(id);
+        Assert.IsTrue(ok);
+
+        var reactivada = _db.GetPrescriptionById(id);
+        Assert.IsNotNull(reactivada);
+        Assert.AreEqual("EMITIDA", reactivada.Estado);
+        Assert.IsNull(reactivada.MotivoAnulacion);
+    }
 }

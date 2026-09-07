@@ -339,6 +339,25 @@ public class HttpServer
             return;
         }
 
+        // POST /api/recetas/{id}/reactivar (Deshacer anulación)
+        var matchReactivar = Regex.Match(path, @"^/api/recetas/(\d+)/reactivar$", RegexOptions.IgnoreCase);
+        if (req.HttpMethod == "POST" && matchReactivar.Success && int.TryParse(matchReactivar.Groups[1].Value, out int reactivarId))
+        {
+            bool reactivated = _db.ReactivatePrescription(reactivarId);
+            if (!reactivated)
+            {
+                await SendJson(res, new GenericResponse { Status = "error", Detail = "No se pudo reactivar la receta o registro no encontrado." }, AppJsonContext.Default.GenericResponse, 404);
+                return;
+            }
+
+            await SendJson(res, new GenericResponse
+            {
+                Status = "success",
+                Message = "Receta reactivada exitosamente."
+            }, AppJsonContext.Default.GenericResponse);
+            return;
+        }
+
         // GET /api/backup-db
         if (req.HttpMethod == "GET" && path.Equals("/api/backup-db", StringComparison.OrdinalIgnoreCase))
         {

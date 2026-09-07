@@ -452,9 +452,9 @@ async function cargarHistorial(termino = "") {
                 ? `<span style="display: inline-block; padding: 0.2rem 0.55rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;" title="${r.motivo_anulacion ? 'Motivo: ' + escapeHtml(r.motivo_anulacion) : 'Receta anulada'}">🚫 ANULADA</span>`
                 : `<span style="display: inline-block; padding: 0.2rem 0.55rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; background: #dcfce7; color: #15803d; border: 1px solid #86efac;">✅ EMITIDA</span>`;
 
-            const btnAnular = !isAnulada
-                ? `<button class="btn btn-secondary btn-sm" style="color: #b91c1c;" onclick="anularReceta(${r.id}, '${escapeHtml(r.numero_receta)}')" title="Anular receta">🚫 Anular</button>`
-                : "";
+            const btnAccionEstado = isAnulada
+                ? `<button class="btn btn-secondary btn-sm" style="color: #15803d; font-weight: 700;" onclick="reactivarReceta(${r.id}, '${escapeHtml(r.numero_receta)}')" title="Deshacer anulación y reactivar receta">↺ Reactivar</button>`
+                : `<button class="btn btn-secondary btn-sm" style="color: #b91c1c;" onclick="anularReceta(${r.id}, '${escapeHtml(r.numero_receta)}')" title="Anular receta">🚫 Anular</button>`;
 
             return `
             <tr>
@@ -468,7 +468,7 @@ async function cargarHistorial(termino = "") {
                     <div style="display: flex; gap: 0.3rem; justify-content: center; align-items: center; flex-wrap: wrap;">
                         <button class="btn btn-secondary btn-sm" onclick="reimprimirReceta(${r.id})" title="Ver e imprimir">🖨️ Ver</button>
                         <button class="btn btn-secondary btn-sm" onclick="editarReceta(${r.id})" title="Editar receta">✏️ Editar</button>
-                        ${btnAnular}
+                        ${btnAccionEstado}
                         <button class="btn btn-secondary btn-sm" style="color: #dc2626;" onclick="eliminarReceta(${r.id}, '${escapeHtml(r.numero_receta)}')" title="Eliminar receta">🗑️ Eliminar</button>
                     </div>
                 </td>
@@ -538,7 +538,7 @@ async function anularReceta(id, numero) {
         });
         const data = await res.json();
         if (res.ok) {
-            alert(`✅ Receta N° ${numero} ha sido anulada exitosamente.`);
+            showToast(`🚫 Receta N° ${numero} ha sido marcada como anulada.`);
             const searchInput = document.getElementById("search-input");
             const termino = searchInput ? searchInput.value.trim() : "";
             cargarHistorial(termino);
@@ -547,6 +547,28 @@ async function anularReceta(id, numero) {
         }
     } catch (err) {
         alert("❌ Error de comunicación al anular receta: " + err);
+    }
+}
+
+async function reactivarReceta(id, numero) {
+    const confirmar = confirm(`¿Desea reactivar la Receta N° ${numero} y restaurar su estado a EMITIDA?\n\nEsta acción revertirá la anulación por accidente y devolverá la receta a su validez oficial.`);
+    if (!confirmar) return;
+
+    try {
+        const res = await fetch(`/api/recetas/${id}/reactivar`, {
+            method: "POST"
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast(`↺ Receta N° ${numero} reactivada correctamente.`);
+            const searchInput = document.getElementById("search-input");
+            const termino = searchInput ? searchInput.value.trim() : "";
+            cargarHistorial(termino);
+        } else {
+            alert("❌ Error al reactivar la receta: " + (data.detail || "Error desconocido"));
+        }
+    } catch (err) {
+        alert("❌ Error de comunicación al reactivar receta: " + err);
     }
 }
 

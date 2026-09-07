@@ -226,6 +226,32 @@ public class ApiIntegrationTests
     }
 
     [TestMethod]
+    public async Task Test_ReactivarPrescription_Returns200AndRestoresEmitida()
+    {
+        var (id, _) = _db.SavePrescription(new PrescriptionInput
+        {
+            Especie = "Felino",
+            NombrePaciente = "Michi",
+            NombrePropietario = "Sofía",
+            Prescripcion = "Gotas",
+            Posologia = "2 gotas"
+        });
+
+        // 1. Anular
+        await _client.PostAsync($"{_baseUrl}/api/recetas/{id}/anular", new StringContent("{}", Encoding.UTF8, "application/json"));
+        Assert.AreEqual("ANULADA", _db.GetPrescriptionById(id)?.Estado);
+
+        // 2. Reactivar vía API
+        var reactivarRes = await _client.PostAsync($"{_baseUrl}/api/recetas/{id}/reactivar", null);
+        Assert.IsTrue(reactivarRes.IsSuccessStatusCode);
+
+        var r = _db.GetPrescriptionById(id);
+        Assert.IsNotNull(r);
+        Assert.AreEqual("EMITIDA", r.Estado);
+        Assert.IsNull(r.MotivoAnulacion);
+    }
+
+    [TestMethod]
     public async Task Test_DeletePrescription_Returns200()
     {
         var (id, _) = _db.SavePrescription(new PrescriptionInput
