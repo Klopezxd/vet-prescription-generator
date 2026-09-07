@@ -98,20 +98,16 @@ El repositorio incluye dos flujos de trabajo en **GitHub Actions**:
 1. **`lint.yml` (Calidad Continua):**
    * Se ejecuta en cada `push` o `pull_request` a la rama `main`.
    * Restaura, compila y ejecuta la suite de 28 pruebas automatizadas en un entorno Windows nativo.
-2. **`release.yml` (Publicación Automática de Ejecutables):**
-   * Se dispara automáticamente al crear un tag de versión (`v1.0.0`, `v1.1.0`, etc.) o manualmente desde la pestaña **Actions** con el botón **Run workflow**.
-   * Compila el binario autónomo `Single-File Trimmed AOT` en .NET 10.
-   * Genera el ejecutable `Recetario_Agrocalidad.exe` y el paquete `Recetario_Agrocalidad_win-x64.zip`.
-   * Publica automáticamente una **GitHub Release** pública con las notas de versión y los archivos descargables listos para el usuario final.
+2. **`release.yml` (Publicación 100% Automática de Ejecutables):**
+   * **Automático con cada `push` a `main`:** No requiere pasos manuales. Cada vez que subes cambios al repositorio, GitHub compila, valida la suite de 28 pruebas y publica automáticamente la nueva versión (`v1.0.1`, `v1.0.2`...) marcada siempre como **Latest Release**.
+   * **Descarga directa permanente:** El enlace de la última versión siempre ofrece el ejecutable más reciente sin romper enlaces externos.
+   * **Soporte para Tags / Manual:** Si deseas congelar una versión mayor (ej. `v2.0.0`), puedes empujar un tag o dispararlo desde la interfaz web de GitHub.
 
-### Cómo publicar una nueva versión:
+### Publicación y Versionado:
 ```bash
-# Método 1: Mediante etiquetas de Git
-git tag v1.0.0
-git push origin v1.0.0
-
-# Método 2: Desde la web de GitHub
-# Ve a Actions -> Release Executable -> Run workflow -> Ingresa el tag y ejecuta.
+# Totalmente automático: solo haz push de tus cambios a main
+git push origin main
+# -> GitHub compilará y publicará el nuevo .exe en Releases automáticamente.
 ```
 
 ---

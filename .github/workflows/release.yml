@@ -2,14 +2,16 @@ name: Release Executable
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Nombre de la versión / Tag (ej. v1.0.0)'
-        required: true
-        default: 'v1.0.0'
+        description: 'Nombre personalizado de versión (opcional, ej. v1.0.0)'
+        required: false
+        default: ''
 
 jobs:
   release:
@@ -48,25 +50,33 @@ jobs:
           path: dist/Recetario_Agrocalidad.exe
           retention-days: 90
 
-      - name: Determinar Tag de Versión
+      - name: Determinar Tag y Título de Versión
         id: get_tag
         shell: pwsh
         run: |
-          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
-            $tag = "${{ github.event.inputs.tag_name }}"
-          } else {
+          $inputTag = "${{ github.event.inputs.tag_name }}"
+          if ($inputTag -ne "") {
+            $tag = $inputTag
+            $title = "Versión $tag"
+          } elseif ("${{ github.ref_type }}" -eq "tag") {
             $tag = "${{ github.ref_name }}"
+            $title = "Versión $tag"
+          } else {
+            $tag = "v1.0.${{ github.run_number }}"
+            $title = "Versión $tag (Build Automático)"
           }
-          echo "tag=$tag" >> $env:GITHUB_OUTPUT
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "title=$title" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Publicar Release Oficial en GitHub
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.get_tag.outputs.tag }}
-          name: Versión ${{ steps.get_tag.outputs.tag }}
+          name: ${{ steps.get_tag.outputs.title }}
           files: |
             dist/Recetario_Agrocalidad.exe
             dist/Recetario_Agrocalidad_win-x64.zip
           generate_release_notes: true
           draft: false
           prerelease: false
+          make_latest: true
