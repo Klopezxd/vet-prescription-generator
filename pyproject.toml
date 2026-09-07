@@ -5,14 +5,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "vet-prescription-generator"
 version = "2.0.0"
-description = "Generador automatizado de recetas médicas veterinarias en DOCX y PDF."
+description = "Sistema de emisión, impresión instantánea y auditoría de recetas veterinarias (Agrocalidad Ecuador)."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
     { name = "Klever López", email = "lkleverjosue@gmail.com" }
 ]
 license = { text = "PolyForm Noncommercial 1.0.0" }
-keywords = ["veterinary", "prescription", "docx", "pdf", "tkinter", "python"]
+keywords = ["veterinary", "prescription", "agrocalidad", "fastapi", "desktop", "python"]
 
 [tool.ruff]
 line-length = 100

@@ -15,18 +15,11 @@ if exist "venv\Scripts\activate.bat" (
     call ".venv\Scripts\activate.bat"
 )
 
-:: 2. Abrir automáticamente en el navegador predeterminado
-start "" http://localhost:8000
+:: 2. Iniciar aplicación nativa de escritorio
+python main.py
 
-echo [OK] Servidor iniciado en http://localhost:8000
-echo Para acceder desde tu celular o tablet en el local:
-echo Abre la IP local de esta PC con el puerto :8000
-echo.
-echo Presiona Ctrl+C para cerrar el sistema.
-echo ========================================================
-echo.
-
-:: 3. Iniciar servidor FastAPI con Uvicorn
-python -m uvicorn src.api:app --host 0.0.0.0 --port 8000
-
-pause
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo [AVISO] Se cerró la aplicación o ocurrió un problema.
+    pause
+)
