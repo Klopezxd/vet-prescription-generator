@@ -6,12 +6,39 @@ let currentRecipeNumber = "0001";
 let editingRecipeId = null;
 let searchDebounceTimer = null;
 
+// Función de seguridad para sanitizar cadenas HTML y prevenir XSS
+function escapeHtml(text) {
+    if (text === null || text === undefined) return "";
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     initRealtimePreview();
     setTodayDate();
+    initDateAutoPadding();
     fetchNextNumber();
     fetchVetConfig();
 });
+
+function initDateAutoPadding() {
+    ["input-dia", "input-mes"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener("blur", () => {
+                const val = el.value.trim();
+                if (val.length === 1 && !isNaN(val)) {
+                    el.value = "0" + val;
+                    el.dispatchEvent(new Event("input"));
+                }
+            });
+        }
+    });
+}
 
 // 1. Vinculación en Tiempo Real (Formulario -> Hoja Agrocalidad)
 function initRealtimePreview() {
@@ -260,6 +287,12 @@ async function guardarConfiguracion() {
 
 // 6. Emisión / Actualización e Impresión Directa
 async function emitirReceta() {
+    const form = document.getElementById("recipe-form");
+    if (form && !form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
     const payload = {
         dia: document.getElementById("input-dia").value.trim(),
         mes: document.getElementById("input-mes").value.trim(),
@@ -361,34 +394,34 @@ async function cargarHistorial(termino = "") {
         tbody.innerHTML = recetas.map(r => {
             const isAnulada = r.estado === "ANULADA";
             const badgeEstado = isAnulada
-                ? `<span style="display: inline-block; padding: 0.2rem 0.55rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;" title="${r.motivo_anulacion ? 'Motivo: ' + r.motivo_anulacion : 'Receta anulada'}">🚫 ANULADA</span>`
+                ? `<span style="display: inline-block; padding: 0.2rem 0.55rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;" title="${r.motivo_anulacion ? 'Motivo: ' + escapeHtml(r.motivo_anulacion) : 'Receta anulada'}">🚫 ANULADA</span>`
                 : `<span style="display: inline-block; padding: 0.2rem 0.55rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; background: #dcfce7; color: #15803d; border: 1px solid #86efac;">✅ EMITIDA</span>`;
 
             const btnAnular = !isAnulada
-                ? `<button class="btn btn-secondary btn-sm" style="color: #b91c1c;" onclick="anularReceta(${r.id}, '${r.numero_receta}')" title="Anular receta">🚫 Anular</button>`
+                ? `<button class="btn btn-secondary btn-sm" style="color: #b91c1c;" onclick="anularReceta(${r.id}, '${escapeHtml(r.numero_receta)}')" title="Anular receta">🚫 Anular</button>`
                 : "";
 
             return `
             <tr>
-                <td><strong>${r.numero_receta}</strong></td>
-                <td>${r.fecha_emision}</td>
-                <td><strong>${r.nombre_propietario}</strong></td>
-                <td>${r.nombre_paciente} (${r.especie})</td>
-                <td style="max-width: 250px; font-size: 0.8rem;">${r.prescripcion}</td>
+                <td><strong>${escapeHtml(r.numero_receta)}</strong></td>
+                <td>${escapeHtml(r.fecha_emision)}</td>
+                <td><strong>${escapeHtml(r.nombre_propietario)}</strong></td>
+                <td>${escapeHtml(r.nombre_paciente)} (${escapeHtml(r.especie)})</td>
+                <td style="max-width: 250px; font-size: 0.8rem;">${escapeHtml(r.prescripcion)}</td>
                 <td style="text-align: center;">${badgeEstado}</td>
                 <td style="text-align: center;">
                     <div style="display: flex; gap: 0.3rem; justify-content: center; align-items: center; flex-wrap: wrap;">
                         <button class="btn btn-secondary btn-sm" onclick="reimprimirReceta(${r.id})" title="Ver e imprimir">🖨️ Ver</button>
                         <button class="btn btn-secondary btn-sm" onclick="editarReceta(${r.id})" title="Editar receta">✏️ Editar</button>
                         ${btnAnular}
-                        <button class="btn btn-secondary btn-sm" style="color: #dc2626;" onclick="eliminarReceta(${r.id}, '${r.numero_receta}')" title="Eliminar receta">🗑️ Eliminar</button>
+                        <button class="btn btn-secondary btn-sm" style="color: #dc2626;" onclick="eliminarReceta(${r.id}, '${escapeHtml(r.numero_receta)}')" title="Eliminar receta">🗑️ Eliminar</button>
                     </div>
                 </td>
             </tr>
             `;
         }).join("");
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Error al cargar historial: ${err}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Error al cargar historial: ${escapeHtml(err)}</td></tr>`;
     }
 }
 

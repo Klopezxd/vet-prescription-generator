@@ -20,7 +20,7 @@ public class HttpServer
     private readonly int _port;
     private bool _isRunning;
     private readonly string _webRoot;
-    private DateTime _lastHeartbeat = DateTime.UtcNow;
+    private long _lastHeartbeatTicks = DateTime.UtcNow.Ticks;
     private readonly DateTime _startupTime = DateTime.UtcNow;
     private readonly ManualResetEventSlim _shutdownSignal = new(false);
 
@@ -46,9 +46,10 @@ public class HttpServer
     {
         while (!_shutdownSignal.Wait(TimeSpan.FromSeconds(2)))
         {
+            var lastActivity = new DateTime(Interlocked.Read(ref _lastHeartbeatTicks), DateTimeKind.Utc);
             // Gracia inicial de 60s. Si transcurren más de 30s sin actividad ni latidos, la ventana se cerró
             if ((DateTime.UtcNow - _startupTime).TotalSeconds > 60 &&
-                (DateTime.UtcNow - _lastHeartbeat).TotalSeconds > 30)
+                (DateTime.UtcNow - lastActivity).TotalSeconds > 30)
             {
                 break;
             }
@@ -90,7 +91,7 @@ public class HttpServer
     {
         var req = context.Request;
         var res = context.Response;
-        _lastHeartbeat = DateTime.UtcNow;
+        Interlocked.Exchange(ref _lastHeartbeatTicks, DateTime.UtcNow.Ticks);
 
         // Headers CORS
         res.Headers.Add("Access-Control-Allow-Origin", "*");
@@ -145,7 +146,7 @@ public class HttpServer
         // GET /api/heartbeat
         if (req.HttpMethod == "GET" && path.Equals("/api/heartbeat", StringComparison.OrdinalIgnoreCase))
         {
-            _lastHeartbeat = DateTime.UtcNow;
+            Interlocked.Exchange(ref _lastHeartbeatTicks, DateTime.UtcNow.Ticks);
             await SendJson(res, new GenericResponse { Status = "alive" }, AppJsonContext.Default.GenericResponse);
             return;
         }
@@ -213,17 +214,33 @@ public class HttpServer
         if (req.HttpMethod == "POST" && path.Equals("/api/recetas", StringComparison.OrdinalIgnoreCase))
         {
             string body = await ReadBodyAsString(req);
-            var input = JsonSerializer.Deserialize(body, AppJsonContext.Default.PrescriptionInput);
+            PrescriptionInput? input = null;
+            try
+            {
+                input = JsonSerializer.Deserialize(body, AppJsonContext.Default.PrescriptionInput);
+            }
+            catch (Exception ex)
+            {
+                await SendJson(res, new GenericResponse { Status = "error", Detail = $"Formato JSON no válido: {ex.Message}" }, AppJsonContext.Default.GenericResponse, 400);
+                return;
+            }
+
             if (input == null)
             {
                 await SendJson(res, new GenericResponse { Status = "error", Detail = "Cuerpo de solicitud inválido." }, AppJsonContext.Default.GenericResponse, 400);
                 return;
             }
 
-            var (id, numeroReceta) = _db.SavePrescription(input);
+            if (!input.Validate(out string? valError))
+            {
+                await SendJson(res, new GenericResponse { Status = "error", Detail = valError }, AppJsonContext.Default.GenericResponse, 400);
+                return;
+            }
+
+            var (createdId, numeroReceta) = _db.SavePrescription(input);
             await SendJson(res, new CreateRecipeResponse
             {
-                Id = id,
+                Id = createdId,
                 NumeroReceta = numeroReceta,
                 Status = "success",
                 Message = $"Receta N° {numeroReceta} emitida exitosamente"
@@ -233,10 +250,8 @@ public class HttpServer
 
         // Rutas con ID: /api/recetas/{id}
         var matchId = Regex.Match(path, @"^/api/recetas/(\d+)$", RegexOptions.IgnoreCase);
-        if (matchId.Success)
+        if (matchId.Success && int.TryParse(matchId.Groups[1].Value, out int id))
         {
-            int id = int.Parse(matchId.Groups[1].Value);
-
             if (req.HttpMethod == "GET")
             {
                 var receta = _db.GetPrescriptionById(id);
@@ -252,10 +267,26 @@ public class HttpServer
             if (req.HttpMethod == "PUT")
             {
                 string body = await ReadBodyAsString(req);
-                var input = JsonSerializer.Deserialize(body, AppJsonContext.Default.PrescriptionInput);
+                PrescriptionInput? input = null;
+                try
+                {
+                    input = JsonSerializer.Deserialize(body, AppJsonContext.Default.PrescriptionInput);
+                }
+                catch (Exception ex)
+                {
+                    await SendJson(res, new GenericResponse { Status = "error", Detail = $"Formato JSON no válido: {ex.Message}" }, AppJsonContext.Default.GenericResponse, 400);
+                    return;
+                }
+
                 if (input == null)
                 {
                     await SendJson(res, new GenericResponse { Status = "error", Detail = "Datos inválidos" }, AppJsonContext.Default.GenericResponse, 400);
+                    return;
+                }
+
+                if (!input.Validate(out string? valError))
+                {
+                    await SendJson(res, new GenericResponse { Status = "error", Detail = valError }, AppJsonContext.Default.GenericResponse, 400);
                     return;
                 }
 
@@ -288,13 +319,12 @@ public class HttpServer
 
         // POST /api/recetas/{id}/anular
         var matchAnular = Regex.Match(path, @"^/api/recetas/(\d+)/anular$", RegexOptions.IgnoreCase);
-        if (req.HttpMethod == "POST" && matchAnular.Success)
+        if (req.HttpMethod == "POST" && matchAnular.Success && int.TryParse(matchAnular.Groups[1].Value, out int anularId))
         {
-            int id = int.Parse(matchAnular.Groups[1].Value);
             string body = await ReadBodyAsString(req);
             var anularInput = JsonSerializer.Deserialize(body, AppJsonContext.Default.AnularInput) ?? new AnularInput();
 
-            bool canceled = _db.CancelPrescription(id, anularInput.Motivo);
+            bool canceled = _db.CancelPrescription(anularId, anularInput.Motivo);
             if (!canceled)
             {
                 await SendJson(res, new GenericResponse { Status = "error", Detail = "No se pudo anular la receta." }, AppJsonContext.Default.GenericResponse, 404);
@@ -450,12 +480,20 @@ public class HttpServer
 
     private static async Task SendJson<T>(HttpListenerResponse res, T data, JsonTypeInfo<T> jsonTypeInfo, int statusCode = 200)
     {
-        byte[] bytes = JsonSerializer.SerializeToUtf8Bytes(data, jsonTypeInfo);
-        res.StatusCode = statusCode;
-        res.ContentType = "application/json; charset=utf-8";
-        res.ContentLength64 = bytes.Length;
-        await res.OutputStream.WriteAsync(bytes, 0, bytes.Length);
-        res.Close();
+        try
+        {
+            byte[] bytes = JsonSerializer.SerializeToUtf8Bytes(data, jsonTypeInfo);
+            res.StatusCode = statusCode;
+            res.ContentType = "application/json; charset=utf-8";
+            res.ContentLength64 = bytes.Length;
+            await res.OutputStream.WriteAsync(bytes, 0, bytes.Length);
+            res.Close();
+        }
+        catch (Exception)
+        {
+            // El cliente desconectó antes de finalizar la escritura
+            try { res.Abort(); } catch { }
+        }
     }
 
     private static async Task<byte[]> ExtractFileBytesFromMultipart(HttpListenerRequest req)
@@ -465,7 +503,9 @@ public class HttpServer
         byte[] body = ms.ToArray();
 
         string? contentType = req.ContentType;
-        if (string.IsNullOrEmpty(contentType) || !contentType.Contains("boundary=", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrEmpty(contentType) ||
+            contentType.StartsWith("application/octet-stream", StringComparison.OrdinalIgnoreCase) ||
+            !contentType.Contains("boundary=", StringComparison.OrdinalIgnoreCase))
         {
             return body;
         }

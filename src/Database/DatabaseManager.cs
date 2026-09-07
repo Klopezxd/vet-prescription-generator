@@ -39,6 +39,16 @@ public class DatabaseManager
     public void InitDb()
     {
         using var conn = CreateConnection();
+
+        // Activar modo WAL y sincronización normal para máxima concurrencia y cero bloqueos
+        try
+        {
+            using var pragmaCmd = conn.CreateCommand();
+            pragmaCmd.CommandText = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;";
+            pragmaCmd.ExecuteNonQuery();
+        }
+        catch { }
+
         using var cmd = conn.CreateCommand();
 
         cmd.CommandText = @"
@@ -96,41 +106,52 @@ public class DatabaseManager
         catch { /* Columna ya existente */ }
     }
 
-    public int GetNextRecipeNumber()
+    public int GetNextRecipeNumber(SqliteConnection? existingConn = null, SqliteTransaction? existingTx = null)
     {
-        using var conn = CreateConnection();
-        int maxFromDb = 0;
-        int metaVal = 0;
-
-        using (var cmd = conn.CreateCommand())
+        bool shouldDispose = existingConn == null;
+        var conn = existingConn ?? CreateConnection();
+        try
         {
-            cmd.CommandText = "SELECT MAX(numero_entero) FROM recetas;";
-            var result = cmd.ExecuteScalar();
-            if (result != null && result != DBNull.Value)
-            {
-                maxFromDb = Convert.ToInt32(result);
-            }
-        }
+            int maxFromDb = 0;
+            int metaVal = 0;
 
-        using (var cmd = conn.CreateCommand())
+            using (var cmd = conn.CreateCommand())
+            {
+                if (existingTx != null) cmd.Transaction = existingTx;
+                cmd.CommandText = "SELECT MAX(numero_entero) FROM recetas;";
+                var result = cmd.ExecuteScalar();
+                if (result != null && result != DBNull.Value)
+                {
+                    maxFromDb = Convert.ToInt32(result);
+                }
+            }
+
+            using (var cmd = conn.CreateCommand())
+            {
+                if (existingTx != null) cmd.Transaction = existingTx;
+                cmd.CommandText = "SELECT value FROM app_metadata WHERE key = 'last_counter';";
+                var result = cmd.ExecuteScalar();
+                if (result != null && int.TryParse(result.ToString(), out int val))
+                {
+                    metaVal = val;
+                }
+            }
+
+            return Math.Max(maxFromDb, metaVal) + 1;
+        }
+        finally
         {
-            cmd.CommandText = "SELECT value FROM app_metadata WHERE key = 'last_counter';";
-            var result = cmd.ExecuteScalar();
-            if (result != null && int.TryParse(result.ToString(), out int val))
-            {
-                metaVal = val;
-            }
+            if (shouldDispose) conn.Dispose();
         }
-
-        return Math.Max(maxFromDb, metaVal) + 1;
     }
 
     public (int id, string numeroReceta) SavePrescription(PrescriptionInput input)
     {
+        input.Normalize();
         using var conn = CreateConnection();
         using var tx = conn.BeginTransaction();
 
-        int nextNum = GetNextRecipeNumber();
+        int nextNum = GetNextRecipeNumber(conn, tx);
         string numeroReceta = nextNum.ToString("D4");
         string fechaCompleta = $"{input.Dia}/{input.Mes}/{input.Anio}";
 
@@ -193,6 +214,7 @@ public class DatabaseManager
 
     public bool UpdatePrescription(int id, PrescriptionInput input)
     {
+        input.Normalize();
         using var conn = CreateConnection();
         using var cmd = conn.CreateCommand();
 
@@ -392,6 +414,17 @@ public class DatabaseManager
         {
             InitDb();
         }
+
+        // Forzar vaciado de WAL a la base de datos principal para que la copia esté 100% íntegra y autónoma
+        try
+        {
+            using var conn = CreateConnection();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "PRAGMA wal_checkpoint(FULL);";
+            cmd.ExecuteNonQuery();
+        }
+        catch { }
+
         using var fs = new FileStream(_dbPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         using var ms = new MemoryStream();
         fs.CopyTo(ms);
@@ -432,6 +465,12 @@ public class DatabaseManager
         {
             dst.Write(fileBytes, 0, fileBytes.Length);
         }
+
+        // Eliminar posibles archivos residuales de WAL o SHM de la base anterior para evitar corrupción
+        string walPath = _dbPath + "-wal";
+        string shmPath = _dbPath + "-shm";
+        if (File.Exists(walPath)) { try { File.Delete(walPath); } catch { } }
+        if (File.Exists(shmPath)) { try { File.Delete(shmPath); } catch { } }
 
         // Re-inicializar para verificar integridad
         InitDb();
