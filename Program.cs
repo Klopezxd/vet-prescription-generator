@@ -15,20 +15,6 @@ public static class Program
 {
     private const int Port = 8765;
     private const string TargetUrl = "http://127.0.0.1:8765";
-
-    [DllImport("user32.dll")]
-    private static extern int GetSystemMetrics(int nIndex);
-
-    [DllImport("user32.dll")]
-    private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-
-    [DllImport("user32.dll")]
-    private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
-    private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
-
-    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
-
     [STAThread]
     public static void Main(string[] args)
     {
@@ -118,24 +104,14 @@ public static class Program
         {
             try
             {
-                string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                string profileDir = Path.Combine(localAppData, "RecetarioAgrocalidad", "profile");
-                Directory.CreateDirectory(profileDir);
-
-                int screenW = GetSystemMetrics(0);
-                int screenH = GetSystemMetrics(1);
-                if (screenW <= 0) screenW = 1920;
-                if (screenH <= 0) screenH = 1080;
-
                 var psi = new ProcessStartInfo
                 {
-                    FileName = browserExe,
-                    Arguments = $"--app={url} --user-data-dir=\"{profileDir}\" --window-position=0,0 --window-size={screenW},{screenH} --start-maximized",
-                    UseShellExecute = true,
-                    WindowStyle = ProcessWindowStyle.Maximized
+                    FileName = "cmd.exe",
+                    Arguments = $"/c start \"\" \"{browserExe}\" --app={url} --start-maximized",
+                    CreateNoWindow = true,
+                    UseShellExecute = false
                 };
                 Process.Start(psi);
-                EnsureWindowMaximized();
                 return;
             }
             catch { }
@@ -147,34 +123,9 @@ public static class Program
             Process.Start(new ProcessStartInfo
             {
                 FileName = url,
-                UseShellExecute = true,
-                WindowStyle = ProcessWindowStyle.Maximized
+                UseShellExecute = true
             });
-            EnsureWindowMaximized();
         }
         catch { }
-    }
-
-    private static void EnsureWindowMaximized()
-    {
-        Task.Run(async () =>
-        {
-            for (int i = 0; i < 25; i++)
-            {
-                await Task.Delay(200);
-                EnumWindows((hWnd, lParam) =>
-                {
-                    var sb = new StringBuilder(256);
-                    GetWindowText(hWnd, sb, 256);
-                    string title = sb.ToString();
-                    if (!string.IsNullOrEmpty(title) &&
-                        (title.Contains("Recetario") || title.Contains("Agrocalidad") || title.Contains("Veterinarias")))
-                    {
-                        ShowWindow(hWnd, 3); // 3 = SW_MAXIMIZE
-                    }
-                    return true;
-                }, IntPtr.Zero);
-            }
-        });
     }
 }
