@@ -30,6 +30,8 @@ python -m PyInstaller ^
   --hidden-import "jinja2" ^
   --hidden-import "pydantic" ^
   --hidden-import "sqlite3" ^
+  --hidden-import "multipart" ^
+  --hidden-import "python_multipart" ^
   desktop.py
 
 if %ERRORLEVEL% equ 0 (

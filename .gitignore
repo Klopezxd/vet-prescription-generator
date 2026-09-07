@@ -1,32 +1,44 @@
-# Python
+# Python & Bytecode
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-build/
-dist/
-*.egg-info/
+.ruff_cache/
+
+# Entornos virtuales
 venv/
 .venv/
 env/
+ENV/
 
-# Documentos y registros emitidos (Privacidad médica y comercial)
-Recetas_Word/
-Recetas_PDF/
-contador_recetas.txt
+# Binarios y compilaciones de PyInstaller (NUNCA subir a GitHub)
+build/
+dist/
+*.exe
+*.pkg
+*.spec
+*.manifest
+
+# Datos clínicos, bases de datos y registros (Privacidad médica Agrocalidad)
 recetas.db
 *.db
+*.sqlite
 *.sqlite3
+contador_recetas.txt
+Recetas_Word/
+Recetas_PDF/
 
-# Plantilla real con credenciales personales
+# Plantilla real con datos personales y membrete privado
 plantilla_receta.docx
 
-# Temporales de Office y Logs
-~$*.docx
-*.tmp
+# Archivos de depuración, logs y temporales de Office
 *.log
+*.tmp
+~$*.docx
 
-# IDEs
+# Entornos de desarrollo e IDEs
 .vscode/
 .idea/
 *.swp
+*.swo
+
