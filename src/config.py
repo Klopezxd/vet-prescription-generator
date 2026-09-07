@@ -14,6 +14,7 @@ class AppConfig:
     template_filename: str = "plantilla_receta.docx"
     example_template_filename: str = "assets/plantilla_ejemplo.docx"
     counter_filename: str = "contador_recetas.txt"
+    db_filename: str = "recetas.db"
     word_output_dir: str = "Recetas_Word"
     pdf_output_dir: str = "Recetas_PDF"
 
@@ -32,6 +33,10 @@ class AppConfig:
     @property
     def counter_path(self) -> Path:
         return self.base_dir / self.counter_filename
+
+    @property
+    def db_path(self) -> Path:
+        return self.base_dir / self.db_filename
 
     @property
     def word_dir_path(self) -> Path:
