@@ -106,6 +106,80 @@ public class PrescriptionInput
 
     [JsonPropertyName("instrucciones")]
     public string? Instrucciones { get; set; } = "Sin novedades";
+
+    /// <summary>
+    /// Limpia espacios en blanco y normaliza formatos de fecha y campos por defecto.
+    /// </summary>
+    public void Normalize()
+    {
+        Dia = string.IsNullOrWhiteSpace(Dia) ? DateTime.Now.ToString("dd") : Dia.Trim().PadLeft(2, '0');
+        Mes = string.IsNullOrWhiteSpace(Mes) ? DateTime.Now.ToString("MM") : Mes.Trim().PadLeft(2, '0');
+        Anio = string.IsNullOrWhiteSpace(Anio) ? DateTime.Now.ToString("yyyy") : Anio.Trim();
+
+        Especie = Especie?.Trim() ?? string.Empty;
+        NombrePaciente = string.IsNullOrWhiteSpace(NombrePaciente) ? "No aplica" : NombrePaciente.Trim();
+        Sexo = string.IsNullOrWhiteSpace(Sexo) ? "Macho" : Sexo.Trim();
+        Edad = string.IsNullOrWhiteSpace(Edad) ? "No especificada" : Edad.Trim();
+        NombrePropietario = NombrePropietario?.Trim() ?? string.Empty;
+        DireccionPropietario = string.IsNullOrWhiteSpace(DireccionPropietario) ? "Particular" : DireccionPropietario.Trim();
+        Prescripcion = Prescripcion?.Trim() ?? string.Empty;
+        Diagnostico = string.IsNullOrWhiteSpace(Diagnostico) ? "Evaluación clínica" : Diagnostico.Trim();
+        Posologia = Posologia?.Trim() ?? string.Empty;
+        Instrucciones = string.IsNullOrWhiteSpace(Instrucciones) ? "Sin novedades" : Instrucciones.Trim();
+    }
+
+    /// <summary>
+    /// Valida los campos obligatorios para emisión conforme a la normativa de Agrocalidad Ecuador.
+    /// </summary>
+    public bool Validate(out string? errorMessage)
+    {
+        Normalize();
+
+        if (string.IsNullOrWhiteSpace(NombrePropietario))
+        {
+            errorMessage = "El nombre del propietario o tenedor es obligatorio.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(Especie))
+        {
+            errorMessage = "La especie del animal es obligatoria.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(Prescripcion))
+        {
+            errorMessage = "El detalle de la prescripción farmacológica es obligatorio (principio activo, forma farmacéutica, concentración y unidades).";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(Posologia))
+        {
+            errorMessage = "La posología es obligatoria (vía de administración, dosis por unidad de tiempo y duración).";
+            return false;
+        }
+
+        if (!int.TryParse(Dia, out int d) || d < 1 || d > 31)
+        {
+            errorMessage = "El día de emisión no es válido (debe ser entre 01 y 31).";
+            return false;
+        }
+
+        if (!int.TryParse(Mes, out int m) || m < 1 || m > 12)
+        {
+            errorMessage = "El mes de emisión no es válido (debe ser entre 01 y 12).";
+            return false;
+        }
+
+        if (!int.TryParse(Anio, out int a) || a < 2000 || a > 2100)
+        {
+            errorMessage = "El año de emisión no es válido.";
+            return false;
+        }
+
+        errorMessage = null;
+        return true;
+    }
 }
 
 public class DoctorConfig

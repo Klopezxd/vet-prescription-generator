@@ -13,6 +13,6 @@ dotnet run
 
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo [AVISO] Se cerr? la aplicaci?n o ocurri? un problema.
+    echo [AVISO] Se cerró la aplicación o ocurrió un problema.
     pause
 )

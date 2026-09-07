@@ -7,7 +7,7 @@ obj/
 *.sln.docstates
 *.pdb
 
-# Binarios y compilaciones aut?nomas (NUNCA subir a GitHub)
+# Binarios y compilaciones autónomas (NUNCA subir a GitHub)
 build/
 dist/
 *.exe
@@ -16,7 +16,7 @@ dist/
 *.manifest
 *.bin
 
-# Datos cl?nicos, bases de datos y registros (Privacidad m?dica Agrocalidad)
+# Datos clínicos, bases de datos y registros (Privacidad médica Agrocalidad)
 recetas.db
 recetas_pre_restore.db
 *.db
@@ -30,7 +30,7 @@ plantilla_receta.docx
 *.docx
 *.pdf
 
-# Archivos de depuraci?n y logs
+# Archivos de depuración y logs
 *.log
 *.tmp
 ~$*
