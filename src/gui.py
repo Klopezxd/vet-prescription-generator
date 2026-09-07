@@ -6,11 +6,8 @@ Diseño limpio, validaciones de entrada y autocompletado inteligente de fecha.
 import tkinter as tk
 from datetime import datetime
 from tkinter import messagebox, scrolledtext
-from typing import Optional
 
-from src.config import AppConfig
 from src.generator import (
-    GenerationResult,
     PrescriptionData,
     PrescriptionEngine,
     TemplateNotFoundError,
@@ -20,10 +17,10 @@ from src.generator import (
 class PrescriptionGUI:
     """Ventana principal para captura de datos y emisión de recetas."""
 
-    def __init__(self, root: tk.Tk, engine: Optional[PrescriptionEngine] = None) -> None:
+    def __init__(self, root: tk.Tk, engine: PrescriptionEngine | None = None) -> None:
         self.root = root
         self.engine = engine or PrescriptionEngine()
-        self.root.title("Generador de Recetas Veterinarias Pro")
+        self.root.title("Generador de Recetas Veterinarias")
         self.root.geometry("780x680")
         self.root.minsize(700, 600)
 
@@ -181,7 +178,7 @@ class PrescriptionGUI:
         self.text_instrucciones.delete("1.0", tk.END)
         self.text_instrucciones.insert("1.0", "Sin novedades")
 
-    def _collect_data(self) -> Optional[PrescriptionData]:
+    def _collect_data(self) -> PrescriptionData | None:
         """Extrae y valida los datos de la interfaz."""
         dia = self.entry_dia.get().strip()
         mes = self.entry_mes.get().strip()
