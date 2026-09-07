@@ -1,0 +1,72 @@
+name: Release Executable
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Nombre de la versión / Tag (ej. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  release:
+    name: Build & Publish Release
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Clonar Repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Ejecutar Pruebas Automatizadas (QA)
+        run: dotnet test tests/RecetarioAgrocalidad.Tests/RecetarioAgrocalidad.Tests.csproj -c Release
+
+      - name: Compilar Ejecutable Autónomo (.exe Single-File)
+        run: |
+          dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=true -p:IncludeNativeLibrariesForSelfExtract=true -o dist
+
+      - name: Comprimir Ejecutable en Formato ZIP
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "dist\Recetario_Agrocalidad.exe" -DestinationPath "dist\Recetario_Agrocalidad_win-x64.zip" -Force
+
+      - name: Subir Artifact de Construcción (Actions)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Recetario_Agrocalidad_win-x64
+          path: dist/Recetario_Agrocalidad.exe
+          retention-days: 90
+
+      - name: Determinar Tag de Versión
+        id: get_tag
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $tag = "${{ github.event.inputs.tag_name }}"
+          } else {
+            $tag = "${{ github.ref_name }}"
+          }
+          echo "tag=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Publicar Release Oficial en GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_tag.outputs.tag }}
+          name: Versión ${{ steps.get_tag.outputs.tag }}
+          files: |
+            dist/Recetario_Agrocalidad.exe
+            dist/Recetario_Agrocalidad_win-x64.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: false
