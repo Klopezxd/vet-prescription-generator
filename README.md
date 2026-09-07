@@ -1,14 +1,14 @@
 # Generador de Recetas Veterinarias (Normativa Agrocalidad Ecuador)
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg?logo=fastapi&logoColor=white)
+![CSharp](https://img.shields.io/badge/.NET-10.0-512BD4.svg?logo=dotnet&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-Windows%20(WinExe)-0078D6.svg?logo=windows&logoColor=white)
 ![UI](https://img.shields.io/badge/UI-HTML5%20%7C%20CSS%20Print-E34F26.svg)
 ![Database](https://img.shields.io/badge/Database-SQLite3-003B57.svg?logo=sqlite&logoColor=white)
-![Impresion](https://img.shields.io/badge/Impresi%C3%B3n-A4%20Horizontal%20(50ms)-brightgreen.svg)
-![Linter](https://img.shields.io/badge/Linter-Ruff-000000.svg?logo=ruff&logoColor=white)
+![Binary](https://img.shields.io/badge/Tama%C3%B1o%20Exe-13%20MB%20(Single--File)-brightgreen.svg)
+![Startup](https://img.shields.io/badge/Arranque-%3C50ms-brightgreen.svg)
 ![License](https://img.shields.io/badge/License-PolyForm Noncommercial 1.0.0-green.svg)
 
-> **Sistema clínico y comercial para la emisión secuencial, previsualización en vivo, auditoría local e impresión de recetas médico-veterinarias conforme a las exigencias regulatorias de Agrocalidad (Ecuador).**
+> **Sistema clínico y comercial nativo para la emisión secuencial, previsualización en vivo, auditoría local e impresión de recetas médico-veterinarias conforme a las exigencias regulatorias de Agrocalidad (Ecuador).**
 
 ---
 
@@ -30,7 +30,7 @@ Esta plataforma fue diseñada para agilizar y digitalizar el flujo de trabajo en
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## 🏗️ Arquitectura del Sistema (C# .NET 10 Nativo)
 
 ```mermaid
 flowchart TD
@@ -38,24 +38,24 @@ flowchart TD
         UI["Interfaz Web / Modo Escritorio<br>(HTML5 + CSS Print + JS Reactivo)"]
     end
 
-    subgraph Backend["Capa de Negocio y Control"]
-        API["FastAPI App (src/api.py)"]
-        Desktop["Lanzador Nativo (desktop.py / main.py)"]
+    subgraph Backend["Capa Nativa .NET 10 (WinExe - 13 MB)"]
+        Server["Servidor Embebido Ultra-Ligero (HttpListener)"]
+        Launcher["Lanzador Modo App (Microsoft Edge / Chrome)"]
     end
 
     subgraph Storage["Persistencia y Auditoría"]
         DB[(SQLite3: recetas.db)]
-        Meta[(Configuración del Veterinario)]
+        Meta[(Configuración del Veterinario en app_metadata)]
     end
 
     subgraph Output["Salida Vectorial"]
         Print["Impresión Directa A4 Horizontal<br>(Nativa del sistema / Cero dependencias)"]
     end
 
-    UI -->|Peticiones REST / JSON| API
-    Desktop -->|Inicia Servidor y App Mode| API
-    API <-->|Correlativo, CRUD y Auditoría| DB
-    API <-->|Datos del Profesional| Meta
+    UI -->|Peticiones REST / JSON| Server
+    Launcher -->|Abre Ventana Nativa 1300x850| UI
+    Server <-->|Correlativo, CRUD y Auditoría| DB
+    Server <-->|Datos del Profesional| Meta
     UI -->|Diálogo de Impresión Instantáneo| Print
 ```
 
@@ -65,7 +65,7 @@ flowchart TD
 
 * ⚡ **Previsualización en Tiempo Real (WYSIWYG):** Mientras se digita la información en el formulario, el documento oficial de dos cuerpos se actualiza instantáneamente en pantalla con el diseño exacto que saldrá de la impresora.
 * 🐾 **Chips de Especie Rápida:** Botones de acceso directo con un clic para especies frecuentes: Bovino, Porcino, Equino, Canino, Felino, Ovino, Caprino y Aves.
-* 🖨️ **Impresión Ultrarrápida sin Microsoft Word:** Diseñado con estándares CSS Print (`@page { size: A4 landscape; margin: 4mm; }`), imprime o guarda en PDF vectorial en menos de 50 milisegundos desde cualquier navegador.
+* 🖨️ **Impresión Ultrarrápida sin Microsoft Word:** Diseñado con estándares CSS Print (`@page { size: A4 landscape; margin: 4mm; }`), imprime o guarda en PDF vectorial en menos de 50 milisegundos.
 * ✏️ **Módulo Completo de Gestión Histórica:**
   * **Editar:** Permite corregir errores de digitación en recetas pasadas conservando su número secuencial.
   * **Anular (Agrocalidad):** Marca la receta como anulada con motivo de auditoría sin dejar huecos en la numeración correlativa.
@@ -78,98 +78,31 @@ flowchart TD
 
 ## 📋 Requisitos del Sistema
 
-* **Para Desarrolladores:** Python 3.10 o superior.
-* **Para el Usuario Final (con el `.exe`):** Windows 10 u 11 (no requiere tener Python instalado).
+* **Para Desarrolladores:** .NET 10 SDK (o posterior).
+* **Para el Usuario Final (con el `.exe`):** Windows 10 u 11 (64 bits). **No requiere instalar ningún runtime ni configuración adicional.**
 
 ---
 
-## 🚀 Instalación y Puesta en Marcha
+## 🚀 Puesta en Marcha
 
-### 1. Clonar el Repositorio e Instalar Dependencias
-
+### Modo Desarrollo
 ```powershell
-# Clonar el proyecto
-git clone https://github.com/Klopezxd/vet-prescription-generator.git
-cd vet-prescription-generator
+# Ejecutar directamente con .NET
+dotnet run
 
-# Crear y activar entorno virtual
-python -m venv venv
-.\venv\Scripts\activate
-
-# Instalar dependencias
-pip install -r requirements.txt
+# O simplemente hacer doble clic en:
+iniciar_recetario.bat
 ```
 
-### 2. Ejecutar la Aplicación
-
-#### Opción A: Ejecutable Portable de Escritorio (Recomendado para Usuario Final)
-* **100% Autónomo:** No requiere instalar Python en la máquina destino.
-* Haz doble clic en el archivo generado localmente en:
-  ```text
-  dist/Recetario_Agrocalidad.exe
-  ```
-* *(Para regenerar el ejecutable tras cualquier cambio en el código, haz doble clic en **`build_exe.bat`**).*
-
-#### Opción B: Inicio con Python (Modo Escritorio)
+### Compilación del Ejecutable Autónomo (.exe)
 ```powershell
-python main.py
+# Compilar en 1 solo archivo recortado (13 MB)
+.\build_exe.bat
 ```
-*O haz doble clic sobre el archivo **`iniciar_recetario.bat`**.*
-
-#### Opción C: Inicio Manual por Terminal (Modo Servidor Web)
-```powershell
-python -m uvicorn src.api:app --reload --host 0.0.0.0 --port 8000
-```
-Luego abre en tu navegador: **`http://localhost:8000`**
+El binario resultante se genera en `dist\Recetario_Agrocalidad.exe`.
 
 ---
 
-## 📁 Estructura del Repositorio
+## 📄 Licencia
 
-```text
-vet-prescription-generator/
-├── .github/
-│   └── workflows/
-│       └── lint.yml             # Integración continua con Ruff
-├── assets/
-│   └── app_icon.ico             # Icono oficial veterinario multirresolución
-├── src/
-│   ├── __init__.py
-│   ├── api.py                   # API REST y servidor web FastAPI
-│   ├── config.py                # Rutas dinámicas y compatibilidad PyInstaller
-│   ├── database.py              # Capa de persistencia SQLite y auditoría
-│   ├── static/
-│   │   ├── css/
-│   │   │   └── app.css          # Estilos de pantalla y reglas @media print A4
-│   │   └── js/
-│   │       └── app.js           # Lógica interactiva, CRUD y comunicación con la API
-│   └── templates/
-│       └── index.html           # Vista principal con formulario y hoja oficial
-├── build_exe.bat                # Script de compilación automática del ejecutable
-├── desktop.py                   # Lanzador de escritorio nativo (FastAPI + App Mode)
-├── iniciar_recetario.bat        # Lanzador web para Windows (1 clic)
-├── main.py                      # Punto de entrada principal en Python
-├── pyproject.toml               # Configuración del linter Ruff (PEP 8)
-├── requirements.txt             # Dependencias del proyecto
-├── .gitignore                   # Excluye recetas emitidas, binarios y base de datos
-├── LICENSE                      # Licencia de código abierto PolyForm Noncommercial 1.0.0
-└── README.md                    # Documentación técnica y funcional
-```
-
----
-
-## 🛡️ Calidad de Código y Estándares
-
-El proyecto aplica estándares estrictos de desarrollo:
-* **Linter y Formateador:** [Ruff](https://docs.astral.sh/ruff/) con 0 advertencias o errores de estilo.
-* **Separación de Responsabilidades:** Capas independientes para UI, control de rutas, lógica de negocio y base de datos relacional.
-* **Manejo Seguro de Conexiones:** Conexiones SQLite con context managers (`with`) y bloqueo transaccional para evitar condiciones de carrera en el número secuencial.
-
----
-
-## 📄 Licencia y Créditos
-
-* **Desarrollador:** [Klever López](https://github.com/Klopezxd)
-* **Licencia:** Distribuido bajo la [Licencia PolyForm Noncommercial 1.0.0](LICENSE). Libre para uso comercial, agropecuario y adaptaciones clínicas.
-
-
+Distribuido bajo la Licencia PolyForm Noncommercial 1.0.0. Consulta el archivo `LICENSE` para más información.

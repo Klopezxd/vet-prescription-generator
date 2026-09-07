@@ -1,25 +1,18 @@
 @echo off
-title Recetario Veterinario - Agrocalidad Ecuador
+title Recetario Veterinario - Agrocalidad Ecuador (C# .NET 10)
 chcp 65001 >nul
 color 0B
 
 echo ========================================================
 echo   Iniciando Sistema de Recetas Veterinarias (Agrocalidad)
+echo   Plataforma: C# .NET 10 Nativo de Alto Rendimiento
 echo ========================================================
 echo.
 
-:: 1. Activar entorno virtual si existe
-if exist "venv\Scripts\activate.bat" (
-    call "venv\Scripts\activate.bat"
-) else if exist ".venv\Scripts\activate.bat" (
-    call ".venv\Scripts\activate.bat"
-)
-
-:: 2. Iniciar aplicación nativa de escritorio
-python main.py
+dotnet run
 
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo [AVISO] Se cerró la aplicación o ocurrió un problema.
+    echo [AVISO] Se cerr? la aplicaci?n o ocurri? un problema.
     pause
 )
