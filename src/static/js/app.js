@@ -3,6 +3,7 @@
 // ==========================================================================
 
 let currentRecipeNumber = "0001";
+let editingRecipeId = null;
 let searchDebounceTimer = null;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -103,6 +104,10 @@ function limpiarFormulario() {
     document.getElementById("chk-no-aplica").checked = false;
     document.getElementById("input-nombre-paciente").disabled = false;
     document.getElementById("input-instrucciones").value = "Sin novedades";
+
+    document.querySelectorAll(".chip-btn").forEach(btn => {
+        btn.classList.remove("active");
+    });
     
     // Forzar actualización de vista previa
     document.querySelectorAll(".form-input, .form-textarea, .form-select").forEach(el => {
@@ -110,7 +115,87 @@ function limpiarFormulario() {
     });
 }
 
-// 4. Conexión con Backend FastAPI
+// 4. Edición de Recetas
+async function editarReceta(id) {
+    try {
+        const res = await fetch(`/api/recetas/${id}`);
+        if (!res.ok) throw new Error("No se pudo obtener la receta seleccionada.");
+        const r = await res.json();
+
+        editingRecipeId = id;
+
+        // Rellenar campos del formulario
+        document.getElementById("input-dia").value = r.dia || "";
+        document.getElementById("input-mes").value = r.mes || "";
+        document.getElementById("input-anio").value = r.anio || "";
+        document.getElementById("input-especie").value = r.especie || "";
+
+        // Actualizar chips de especies
+        document.querySelectorAll(".chip-btn").forEach(btn => {
+            btn.classList.toggle("active", btn.textContent.trim() === r.especie);
+        });
+
+        const pacienteInput = document.getElementById("input-nombre-paciente");
+        const chkNoAplica = document.getElementById("chk-no-aplica");
+        if (r.nombre_paciente === "No aplica") {
+            chkNoAplica.checked = true;
+            pacienteInput.value = "No aplica";
+            pacienteInput.disabled = true;
+        } else {
+            chkNoAplica.checked = false;
+            pacienteInput.disabled = false;
+            pacienteInput.value = r.nombre_paciente || "";
+        }
+
+        document.getElementById("input-sexo").value = r.sexo || "Macho";
+        document.getElementById("input-edad").value = r.edad || "";
+        document.getElementById("input-nombre-prop").value = r.nombre_propietario || "";
+        document.getElementById("input-dir-prop").value = r.direccion_propietario || "";
+        document.getElementById("input-prescripcion").value = r.prescripcion || "";
+        document.getElementById("input-diagnostico").value = r.diagnostico || "";
+        document.getElementById("input-posologia").value = r.posologia || "";
+        document.getElementById("input-instrucciones").value = r.instrucciones || "";
+
+        // Disparar eventos para actualizar vista previa
+        document.querySelectorAll(".form-input, .form-textarea, .form-select").forEach(el => {
+            el.dispatchEvent(new Event("input"));
+        });
+
+        // Reflejar número de receta en vista previa
+        document.getElementById("prev-c1-num").textContent = r.numero_receta;
+        document.getElementById("prev-c2-num").textContent = r.numero_receta;
+
+        // Mostrar banner de edición
+        const editBanner = document.getElementById("edit-banner");
+        if (editBanner) editBanner.style.display = "flex";
+        const editNum = document.getElementById("edit-receta-num");
+        if (editNum) editNum.textContent = r.numero_receta;
+
+        // Modificar texto del botón de acción
+        const submitBtn = document.getElementById("btn-submit-recipe");
+        if (submitBtn) submitBtn.textContent = "💾 GUARDAR CAMBIOS EN RECETA";
+
+        // Cambiar a pestaña emitir
+        switchTab("emitir");
+    } catch (err) {
+        alert("❌ Error al cargar receta para edición: " + err);
+    }
+}
+
+function cancelarEdicion() {
+    editingRecipeId = null;
+
+    const editBanner = document.getElementById("edit-banner");
+    if (editBanner) editBanner.style.display = "none";
+
+    const submitBtn = document.getElementById("btn-submit-recipe");
+    if (submitBtn) submitBtn.textContent = "🖨️ EMITIR E IMPRIMIR RECETA";
+
+    limpiarFormulario();
+    fetchNextNumber();
+}
+
+// 5. Conexión con Backend FastAPI
 async function fetchNextNumber() {
     try {
         const res = await fetch("/api/next-number");
@@ -173,7 +258,7 @@ async function guardarConfiguracion() {
     }
 }
 
-// 5. Emisión e Impresión Directa
+// 6. Emisión / Actualización e Impresión Directa
 async function emitirReceta() {
     const payload = {
         dia: document.getElementById("input-dia").value.trim(),
@@ -190,6 +275,28 @@ async function emitirReceta() {
         posologia: document.getElementById("input-posologia").value.trim(),
         instrucciones: document.getElementById("input-instrucciones").value.trim() || "Sin novedades"
     };
+
+    if (editingRecipeId) {
+        try {
+            const res = await fetch(`/api/recetas/${editingRecipeId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert("✅ " + (data.message || "Receta actualizada exitosamente."));
+                cancelarEdicion();
+                switchTab("historial");
+            } else {
+                alert("❌ Error al actualizar la receta: " + (data.detail || "Error desconocido"));
+            }
+        } catch (err) {
+            alert("❌ Error al procesar receta: " + err);
+        }
+        return;
+    }
 
     try {
         const res = await fetch("/api/recetas", {
@@ -217,28 +324,29 @@ async function emitirReceta() {
     }
 }
 
-// 6. Navegación entre Pestañas
+// 7. Navegación entre Pestañas
 function switchTab(tabName) {
     document.querySelectorAll(".nav-tab").forEach(tab => tab.classList.remove("active"));
-    document.getElementById(`tab-${tabName}`).classList.add("active");
+    const activeNav = document.getElementById(`tab-${tabName}`);
+    if (activeNav) activeNav.classList.add("active");
 
     const viewEmitir = document.getElementById("view-emitir");
     const viewHistorial = document.getElementById("view-historial");
     const viewConfig = document.getElementById("view-config");
 
-    viewEmitir.style.display = tabName === "emitir" ? "flex" : "none";
-    viewHistorial.style.display = tabName === "historial" ? "block" : "none";
-    viewConfig.style.display = tabName === "config" ? "block" : "none";
+    if (viewEmitir) viewEmitir.style.display = tabName === "emitir" ? "flex" : "none";
+    if (viewHistorial) viewHistorial.style.display = tabName === "historial" ? "block" : "none";
+    if (viewConfig) viewConfig.style.display = tabName === "config" ? "block" : "none";
 
     if (tabName === "historial") {
         cargarHistorial();
     }
 }
 
-// 7. Historial y Búsqueda para Auditorías
+// 8. Historial y Búsqueda para Auditorías
 async function cargarHistorial(termino = "") {
     const tbody = document.getElementById("history-table-body");
-    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Buscando recetas...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Buscando recetas...</td></tr>`;
 
     try {
         const url = termino ? `/api/recetas?q=${encodeURIComponent(termino)}` : "/api/recetas";
@@ -246,33 +354,49 @@ async function cargarHistorial(termino = "") {
         const recetas = await res.json();
 
         if (recetas.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No se encontraron recetas registradas.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="empty-state">No se encontraron recetas registradas.</td></tr>`;
             return;
         }
 
-        tbody.innerHTML = recetas.map(r => `
+        tbody.innerHTML = recetas.map(r => {
+            const isAnulada = r.estado === "ANULADA";
+            const badgeEstado = isAnulada
+                ? `<span style="display: inline-block; padding: 0.2rem 0.55rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;" title="${r.motivo_anulacion ? 'Motivo: ' + r.motivo_anulacion : 'Receta anulada'}">🚫 ANULADA</span>`
+                : `<span style="display: inline-block; padding: 0.2rem 0.55rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; background: #dcfce7; color: #15803d; border: 1px solid #86efac;">✅ EMITIDA</span>`;
+
+            const btnAnular = !isAnulada
+                ? `<button class="btn btn-secondary btn-sm" style="color: #b91c1c;" onclick="anularReceta(${r.id}, '${r.numero_receta}')" title="Anular receta">🚫 Anular</button>`
+                : "";
+
+            return `
             <tr>
                 <td><strong>${r.numero_receta}</strong></td>
                 <td>${r.fecha_emision}</td>
                 <td><strong>${r.nombre_propietario}</strong></td>
                 <td>${r.nombre_paciente} (${r.especie})</td>
                 <td style="max-width: 250px; font-size: 0.8rem;">${r.prescripcion}</td>
+                <td style="text-align: center;">${badgeEstado}</td>
                 <td style="text-align: center;">
-                    <button class="btn btn-secondary btn-sm" onclick="reimprimirReceta(${r.id})">
-                        🖨️ Ver / Imprimir
-                    </button>
+                    <div style="display: flex; gap: 0.3rem; justify-content: center; align-items: center; flex-wrap: wrap;">
+                        <button class="btn btn-secondary btn-sm" onclick="reimprimirReceta(${r.id})" title="Ver e imprimir">🖨️ Ver</button>
+                        <button class="btn btn-secondary btn-sm" onclick="editarReceta(${r.id})" title="Editar receta">✏️ Editar</button>
+                        ${btnAnular}
+                        <button class="btn btn-secondary btn-sm" style="color: #dc2626;" onclick="eliminarReceta(${r.id}, '${r.numero_receta}')" title="Eliminar receta">🗑️ Eliminar</button>
+                    </div>
                 </td>
             </tr>
-        `).join("");
+            `;
+        }).join("");
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Error al cargar historial: ${err}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Error al cargar historial: ${err}</td></tr>`;
     }
 }
 
 function buscarRecetas() {
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(() => {
-        const termino = document.getElementById("search-input").value.trim();
+        const input = document.getElementById("search-input");
+        const termino = input ? input.value.trim() : "";
         cargarHistorial(termino);
     }, 250);
 }
@@ -310,5 +434,84 @@ async function reimprimirReceta(id) {
         setTimeout(() => window.print(), 300);
     } catch (err) {
         alert("❌ Error al cargar receta: " + err);
+    }
+}
+
+// 9. Anulación y Eliminación de Recetas
+async function anularReceta(id, numero) {
+    const motivo = prompt(`¿Motivo de anulación para la Receta N° ${numero}?`, "Error en prescripción / Anulada por el veterinario");
+    if (motivo === null) return; // Operación cancelada por el usuario
+
+    try {
+        const res = await fetch(`/api/recetas/${id}/anular`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ motivo: motivo.trim() || "Anulada por usuario" })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert(`✅ Receta N° ${numero} ha sido anulada exitosamente.`);
+            const searchInput = document.getElementById("search-input");
+            const termino = searchInput ? searchInput.value.trim() : "";
+            cargarHistorial(termino);
+        } else {
+            alert("❌ Error al anular la receta: " + (data.detail || "Error desconocido"));
+        }
+    } catch (err) {
+        alert("❌ Error de comunicación al anular receta: " + err);
+    }
+}
+
+async function eliminarReceta(id, numero) {
+    const confirmar = confirm(`¿Está seguro de que desea ELIMINAR definitivamente la Receta N° ${numero}?\n\nEsta acción no se puede deshacer y retirará el registro del libro.`);
+    if (!confirmar) return;
+
+    try {
+        const res = await fetch(`/api/recetas/${id}`, {
+            method: "DELETE"
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert(`✅ Receta N° ${numero} eliminada correctamente.`);
+            const searchInput = document.getElementById("search-input");
+            const termino = searchInput ? searchInput.value.trim() : "";
+            cargarHistorial(termino);
+        } else {
+            alert("❌ Error al eliminar la receta: " + (data.detail || "Error desconocido"));
+        }
+    } catch (err) {
+        alert("❌ Error de comunicación al eliminar receta: " + err);
+    }
+}
+
+// 10. Restauración de Base de Datos
+async function restaurarBaseDatos() {
+    const fileInput = document.getElementById("restore-file-input");
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        alert("⚠️ Por favor seleccione un archivo .db para restaurar.");
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const confirmar = confirm(`⚠️ ADVERTENCIA: Esta acción reemplazará la base de datos actual con "${file.name}".\n\n¿Desea continuar con la restauración?`);
+    if (!confirmar) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const res = await fetch("/api/restore-db", {
+            method: "POST",
+            body: formData
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert("✅ " + (data.message || "Base de datos restaurada exitosamente."));
+            window.location.reload();
+        } else {
+            alert("❌ Error al restaurar la base de datos: " + (data.detail || "Error desconocido"));
+        }
+    } catch (err) {
+        alert("❌ Error de comunicación al restaurar: " + err);
     }
 }

@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -55,6 +55,11 @@ class PrescriptionCreate(BaseModel):
     instrucciones: str = "Sin novedades"
 
 
+class CancelRequest(BaseModel):
+    """Esquema para anular una receta médica."""
+    motivo: str = "Anulada por usuario"
+
+
 class VetConfigUpdate(BaseModel):
     """Esquema para guardar la configuración del médico veterinario."""
     veterinario_nombre: str = ""
@@ -62,6 +67,7 @@ class VetConfigUpdate(BaseModel):
     veterinario_senescyt: str = ""
     veterinario_telefono: str = ""
     establecimiento_nombre: str = ""
+
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -134,6 +140,39 @@ async def get_prescription(recipe_id: int) -> dict[str, Any]:
     return receta
 
 
+@app.put("/api/recetas/{recipe_id}")
+async def update_prescription(recipe_id: int, data: PrescriptionCreate) -> dict[str, str]:
+    """Actualiza una receta existente conservando su número correlativo."""
+    receta = db.get_prescription_by_id(recipe_id)
+    if not receta:
+        raise HTTPException(status_code=404, detail="Receta no encontrada")
+    success = db.update_prescription(recipe_id, data.model_dump())
+    if not success:
+        raise HTTPException(status_code=500, detail="No se pudo actualizar la receta")
+    return {"status": "success", "message": f"Receta N° {receta['numero_receta']} actualizada exitosamente"}
+
+
+@app.post("/api/recetas/{recipe_id}/anular")
+async def cancel_prescription(recipe_id: int, cancel_data: CancelRequest | None = None) -> dict[str, str]:
+    """Marca una receta como ANULADA para auditoría oficial de Agrocalidad sin generar saltos."""
+    receta = db.get_prescription_by_id(recipe_id)
+    if not receta:
+        raise HTTPException(status_code=404, detail="Receta no encontrada")
+    motivo = cancel_data.motivo if cancel_data else "Anulada por usuario"
+    db.cancel_prescription(recipe_id, motivo=motivo)
+    return {"status": "success", "message": f"Receta N° {receta['numero_receta']} anulada correctamente"}
+
+
+@app.delete("/api/recetas/{recipe_id}")
+async def delete_prescription(recipe_id: int) -> dict[str, str]:
+    """Elimina definitivamente una receta de la base de datos."""
+    receta = db.get_prescription_by_id(recipe_id)
+    if not receta:
+        raise HTTPException(status_code=404, detail="Receta no encontrada")
+    db.delete_prescription(recipe_id)
+    return {"status": "success", "message": f"Receta N° {receta['numero_receta']} eliminada"}
+
+
 @app.get("/api/config")
 async def get_configuration() -> dict[str, str]:
     """Obtiene los datos del médico veterinario prescriptor."""
@@ -159,4 +198,27 @@ async def backup_database():
             media_type="application/x-sqlite3",
         )
     raise HTTPException(status_code=404, detail="Aún no existe base de datos de recetas")
+
+
+@app.post("/api/restore-db")
+async def restore_database(file: UploadFile = File(...)) -> dict[str, str]:
+    """Restaura la base de datos SQLite a partir de un archivo .db respaldado previamente."""
+    if not file.filename or not file.filename.lower().endswith((".db", ".sqlite", ".sqlite3")):
+        raise HTTPException(status_code=400, detail="El archivo debe tener extensión .db o .sqlite")
+
+    content = await file.read()
+    if not content.startswith(b"SQLite format 3\000"):
+        raise HTTPException(status_code=400, detail="El archivo subido no es una base de datos SQLite válida")
+
+    # Respaldo preventivo
+    if config.db_path.exists():
+        backup_path = config.db_path.with_name("recetas_pre_restore.db")
+        try:
+            config.db_path.replace(backup_path)
+        except Exception:
+            pass
+
+    config.db_path.write_bytes(content)
+    return {"status": "success", "message": "Base de datos restaurada exitosamente"}
+
 
