@@ -44,11 +44,11 @@ public class HttpServer
 
     public void WaitForShutdown()
     {
-        while (!_shutdownSignal.Wait(TimeSpan.FromSeconds(1)))
+        while (!_shutdownSignal.Wait(TimeSpan.FromSeconds(2)))
         {
-            // Período de gracia inicial de 30 segundos, luego si no hay heartbeat por 10s -> salir
-            if ((DateTime.UtcNow - _startupTime).TotalSeconds > 30 &&
-                (DateTime.UtcNow - _lastHeartbeat).TotalSeconds > 10)
+            // Gracia inicial de 60s. Si transcurren más de 30s sin actividad ni latidos, la ventana se cerró
+            if ((DateTime.UtcNow - _startupTime).TotalSeconds > 60 &&
+                (DateTime.UtcNow - _lastHeartbeat).TotalSeconds > 30)
             {
                 break;
             }
@@ -90,6 +90,7 @@ public class HttpServer
     {
         var req = context.Request;
         var res = context.Response;
+        _lastHeartbeat = DateTime.UtcNow;
 
         // Headers CORS
         res.Headers.Add("Access-Control-Allow-Origin", "*");

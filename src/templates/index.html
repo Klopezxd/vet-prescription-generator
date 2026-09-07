@@ -26,7 +26,7 @@
         
         <!-- Panel Izquierdo: Formulario de Entrada -->
         <section class="left-panel">
-            <form id="recipe-form" onsubmit="event.preventDefault(); emitirReceta();">
+            <form id="recipe-form" onsubmit="return false;">
 
                 <!-- Banner de Modo Edición -->
                 <div id="edit-banner" style="display: none; background: #fef3c7; border: 1px solid #f59e0b; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; align-items: center; justify-content: space-between;">
@@ -149,7 +149,7 @@
                 <!-- Botones de Acción -->
                 <div class="action-buttons">
                     <button type="button" class="btn btn-secondary" onclick="limpiarFormulario()">🧹 Limpiar</button>
-                    <button type="submit" id="btn-submit-recipe" class="btn btn-primary">🖨️ EMITIR E IMPRIMIR RECETA</button>
+                    <button type="button" id="btn-submit-recipe" class="btn btn-primary" onclick="emitirReceta()">🖨️ EMITIR E IMPRIMIR RECETA</button>
                 </div>
 
             </form>
