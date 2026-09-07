@@ -272,6 +272,19 @@ public class DatabaseManager
         return cmd.ExecuteNonQuery() > 0;
     }
 
+    public bool ReactivatePrescription(int id)
+    {
+        using var conn = CreateConnection();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            UPDATE recetas 
+            SET estado = 'EMITIDA', motivo_anulacion = NULL 
+            WHERE id = @id;
+        ";
+        cmd.Parameters.AddWithValue("@id", id);
+        return cmd.ExecuteNonQuery() > 0;
+    }
+
     public bool DeletePrescription(int id)
     {
         using var conn = CreateConnection();
