@@ -1,17 +1,13 @@
-# Python & Bytecode
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.ruff_cache/
+# .NET Build Artifacts
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.pdb
 
-# Entornos virtuales
-venv/
-.venv/
-env/
-ENV/
-
-# Binarios y compilaciones de PyInstaller (NUNCA subir a GitHub)
+# Binarios y compilaciones aut?nomas (NUNCA subir a GitHub)
 build/
 dist/
 *.exe
@@ -20,8 +16,9 @@ dist/
 *.manifest
 *.bin
 
-# Datos clínicos, bases de datos y registros (Privacidad médica Agrocalidad)
+# Datos cl?nicos, bases de datos y registros (Privacidad m?dica Agrocalidad)
 recetas.db
+recetas_pre_restore.db
 *.db
 *.sqlite
 *.sqlite3
@@ -33,10 +30,9 @@ plantilla_receta.docx
 *.docx
 *.pdf
 
-# Archivos de depuración, logs y temporales de Office
+# Archivos de depuraci?n y logs
 *.log
 *.tmp
-~$*.docx
 ~$*
 
 # Entornos de desarrollo e IDEs
@@ -47,5 +43,3 @@ plantilla_receta.docx
 .DS_Store
 Thumbs.db
 desktop.ini
-
-

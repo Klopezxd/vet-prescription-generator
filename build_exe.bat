@@ -1,43 +1,20 @@
 @echo off
-title Compilando Recetario Agrocalidad
+title Compilando Recetario Agrocalidad (C# .NET 10 Nativo)
 chcp 65001 >nul
 color 0A
 
 echo ========================================================
 echo   Compilando Recetario Agrocalidad en Ejecutable (.exe)
+echo   Arquitectura: C# .NET 10 (Single-File Trimmed AOT)
 echo ========================================================
 echo.
 
-python -m PyInstaller ^
-  --name "Recetario_Agrocalidad" ^
-  --onefile ^
-  --noconsole ^
-  --clean ^
-  --icon "assets/app_icon.ico" ^
-  --add-data "src/templates;src/templates" ^
-  --add-data "src/static;src/static" ^
-  --add-data "assets;assets" ^
-  --hidden-import "uvicorn" ^
-  --hidden-import "uvicorn.logging" ^
-  --hidden-import "uvicorn.loops" ^
-  --hidden-import "uvicorn.loops.auto" ^
-  --hidden-import "uvicorn.protocols" ^
-  --hidden-import "uvicorn.protocols.http" ^
-  --hidden-import "uvicorn.protocols.http.auto" ^
-  --hidden-import "uvicorn.protocols.websockets" ^
-  --hidden-import "uvicorn.protocols.websockets.auto" ^
-  --hidden-import "fastapi" ^
-  --hidden-import "jinja2" ^
-  --hidden-import "pydantic" ^
-  --hidden-import "sqlite3" ^
-  --hidden-import "multipart" ^
-  --hidden-import "python_multipart" ^
-  desktop.py
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=true -p:IncludeNativeLibrariesForSelfExtract=true -o dist
 
 if %ERRORLEVEL% equ 0 (
     echo.
     echo ========================================================
-    echo   [EXITO] Ejecutable generado en: dist\Recetario_Agrocalidad.exe
+    echo   [EXITO] Ejecutable nativo generado en: dist\Recetario_Agrocalidad.exe
     echo ========================================================
 ) else (
     echo.
