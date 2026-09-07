@@ -22,7 +22,6 @@ document.addEventListener("DOMContentLoaded", () => {
     initRealtimePreview();
     setTodayDate();
     initDateAutoPadding();
-    initZoomControls();
     fetchNextNumber();
     fetchVetConfig();
 });
@@ -667,7 +666,7 @@ setInterval(() => {
 }, 2000);
 
 // ==========================================================================
-// 12. Control de Zoom y Maximización de Pantalla
+// 12. Maximización de Pantalla
 // ==========================================================================
 
 function asegurarPantallaMaximizada() {
@@ -679,64 +678,3 @@ function asegurarPantallaMaximizada() {
     } catch (e) {}
 }
 
-let currentZoom = 1.0;
-
-function initZoomControls() {
-    const savedZoom = localStorage.getItem("recetario_zoom");
-    if (savedZoom) {
-        const z = parseFloat(savedZoom);
-        if (!isNaN(z)) {
-            aplicarZoom(z);
-            return;
-        }
-    }
-    // Si la pantalla es más pequeña (por ejemplo notebooks), auto-ajustar al ancho disponible
-    if (window.innerWidth < 1440) {
-        ajustarZoomAlAncho();
-    } else {
-        aplicarZoom(1.0);
-    }
-}
-
-function aplicarZoom(nivel) {
-    currentZoom = Math.max(0.65, Math.min(1.4, Math.round(nivel * 100) / 100));
-    const sheet = document.getElementById("printable-sheet");
-    const label = document.getElementById("zoom-level-text");
-    if (sheet) {
-        sheet.style.zoom = currentZoom;
-    }
-    if (label) {
-        label.textContent = `${Math.round(currentZoom * 100)}%`;
-    }
-    try {
-        localStorage.setItem("recetario_zoom", currentZoom.toString());
-    } catch (e) {}
-}
-
-function cambiarZoom(delta) {
-    localStorage.setItem("recetario_zoom_manual", "true");
-    aplicarZoom(currentZoom + delta);
-}
-
-function resetZoom() {
-    localStorage.removeItem("recetario_zoom_manual");
-    aplicarZoom(1.0);
-}
-
-function ajustarZoomAlAncho() {
-    const rightPanel = document.querySelector(".right-panel");
-    const sheet = document.getElementById("printable-sheet");
-    if (!rightPanel || !sheet) return;
-    const availableWidth = rightPanel.clientWidth - 50;
-    const naturalWidth = 1160;
-    if (availableWidth > 0) {
-        const fitScale = Math.min(1.35, Math.max(0.65, availableWidth / naturalWidth));
-        aplicarZoom(fitScale);
-    }
-}
-
-window.addEventListener("resize", () => {
-    if (window.innerWidth < 1440 && !localStorage.getItem("recetario_zoom_manual")) {
-        ajustarZoomAlAncho();
-    }
-});
