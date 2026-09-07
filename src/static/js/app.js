@@ -285,6 +285,9 @@ async function guardarConfiguracion() {
     }
 }
 
+let lastEmittedRecipeId = null;
+let lastEmittedPayload = null;
+
 // 6. Emisión / Actualización e Impresión Directa
 async function emitirReceta() {
     const form = document.getElementById("recipe-form");
@@ -344,15 +347,21 @@ async function emitirReceta() {
             document.getElementById("prev-c1-num").textContent = data.numero_receta;
             document.getElementById("prev-c2-num").textContent = data.numero_receta;
 
+            lastEmittedRecipeId = data.id;
+            lastEmittedPayload = { ...payload };
+
             // Abrir inmediatamente el diálogo de impresión de la hoja A4 apaisada
             window.print();
 
-            // Preparar siguiente número correlativo
+            // LIMPIEZA AUTOMÁTICA DEL FORMULARIO PARA LA SIGUIENTE RECETA
+            limpiarFormulario();
+
+            // Preparar siguiente número correlativo oficial en base de datos
             await fetchNextNumber();
 
             // Retroalimentación visual garantizada: Toast y Modal de Confirmación
-            showToast(`✅ Receta N° ${data.numero_receta} emitida y guardada con éxito.`);
-            mostrarModalExito(data.numero_receta, payload);
+            showToast(`✅ Receta N° ${data.numero_receta} emitida. Formulario listo para la siguiente.`);
+            mostrarModalExito(data.numero_receta, lastEmittedPayload);
         } else {
             alert("❌ Error al emitir la receta: " + (data.detail || "Error desconocido"));
         }
@@ -395,21 +404,45 @@ function mostrarModalExito(numeroReceta, payload) {
 function cerrarModalNuevaReceta() {
     const modal = document.getElementById("modal-success");
     if (modal) modal.style.display = "none";
-    limpiarFormulario();
-    fetchNextNumber();
     const espInput = document.getElementById("input-especie");
     if (espInput) espInput.focus();
+}
+
+function conservarPropietarioModal() {
+    const modal = document.getElementById("modal-success");
+    if (modal) modal.style.display = "none";
+    if (lastEmittedPayload) {
+        document.getElementById("input-nombre-prop").value = lastEmittedPayload.nombre_propietario || "";
+        document.getElementById("input-dir-prop").value = lastEmittedPayload.direccion_propietario || "";
+        document.getElementById("input-especie").value = lastEmittedPayload.especie || "";
+        
+        document.querySelectorAll(".chip-btn").forEach(btn => {
+            btn.classList.toggle("active", btn.textContent.trim() === lastEmittedPayload.especie);
+        });
+
+        // Disparar eventos para actualizar preview
+        ["input-nombre-prop", "input-dir-prop", "input-especie"].forEach(id => {
+            document.getElementById(id)?.dispatchEvent(new Event("input"));
+        });
+
+        const presInput = document.getElementById("input-prescripcion");
+        if (presInput) presInput.focus();
+        showToast("👤 Datos del propietario cargados para la nueva receta.");
+    }
 }
 
 function irAHistorialDesdeModal() {
     const modal = document.getElementById("modal-success");
     if (modal) modal.style.display = "none";
-    limpiarFormulario();
     switchTab("historial");
 }
 
 function reimprimirDesdeModal() {
-    window.print();
+    if (lastEmittedRecipeId) {
+        reimprimirReceta(lastEmittedRecipeId);
+    } else {
+        window.print();
+    }
 }
 
 // 7. Navegación entre Pestañas
