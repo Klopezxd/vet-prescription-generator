@@ -439,6 +439,38 @@
     </section>
 
 
+    <!-- Contenedor Flotante de Notificaciones Toast -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Modal de Confirmación de Emisión Exitosa -->
+    <div id="modal-success" class="modal-overlay" style="display: none;">
+        <div class="modal-dialog">
+            <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
+            <h3 style="font-size: 1.35rem; color: #15803d; margin-bottom: 0.25rem;">¡Receta Emitida y Guardada con Éxito!</h3>
+            <p style="color: #64748b; font-size: 0.92rem; margin-bottom: 1.25rem;">
+                La <strong>Receta N° <span id="modal-receta-num" style="color: #0f172a; font-size: 1.1rem; text-decoration: underline;"></span></strong> ha sido registrada en el libro oficial de Agrocalidad y guardada en la base de datos local.
+            </p>
+
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.9rem 1.1rem; margin-bottom: 1.5rem; text-align: left; font-size: 0.88rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                <div>👤 <strong>Propietario:</strong> <span id="modal-prop-nombre">--</span></div>
+                <div>🐾 <strong>Paciente / Especie:</strong> <span id="modal-paciente-nombre">--</span></div>
+                <div>📅 <strong>Fecha:</strong> <span id="modal-fecha-emision">--</span></div>
+            </div>
+
+            <div style="display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary" onclick="cerrarModalNuevaReceta()" style="flex: 1.5; min-width: 170px;">
+                    📝 Nueva Receta
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="irAHistorialDesdeModal()" style="flex: 1.2; min-width: 150px;">
+                    📋 Ver en Historial
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="reimprimirDesdeModal()" style="width: auto; padding: 0.75rem 1rem;" title="Volver a abrir el diálogo de impresión">
+                    🖨️ Reimprimir
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Script de Reactividad y Control -->
     <script src="/static/js/app.js"></script>
 </body>

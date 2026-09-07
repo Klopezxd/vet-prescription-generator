@@ -349,12 +349,67 @@ async function emitirReceta() {
 
             // Preparar siguiente número correlativo
             await fetchNextNumber();
+
+            // Retroalimentación visual garantizada: Toast y Modal de Confirmación
+            showToast(`✅ Receta N° ${data.numero_receta} emitida y guardada con éxito.`);
+            mostrarModalExito(data.numero_receta, payload);
         } else {
             alert("❌ Error al emitir la receta: " + (data.detail || "Error desconocido"));
         }
     } catch (err) {
         alert("❌ Error al procesar receta: " + err);
     }
+}
+
+// 6.1 Feedback Visual: Toast y Modal de Confirmación
+function showToast(message, type = "success") {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    if (type === "error") {
+        toast.style.borderLeftColor = "#dc2626";
+    }
+    toast.textContent = message;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 300);
+    }, 4500);
+}
+
+function mostrarModalExito(numeroReceta, payload) {
+    const modal = document.getElementById("modal-success");
+    if (!modal) return;
+
+    document.getElementById("modal-receta-num").textContent = numeroReceta;
+    document.getElementById("modal-prop-nombre").textContent = payload.nombre_propietario || "--";
+    document.getElementById("modal-paciente-nombre").textContent = `${payload.nombre_paciente} (${payload.especie})`;
+    document.getElementById("modal-fecha-emision").textContent = `${payload.dia}/${payload.mes}/${payload.anio}`;
+
+    modal.style.display = "flex";
+}
+
+function cerrarModalNuevaReceta() {
+    const modal = document.getElementById("modal-success");
+    if (modal) modal.style.display = "none";
+    limpiarFormulario();
+    fetchNextNumber();
+    const espInput = document.getElementById("input-especie");
+    if (espInput) espInput.focus();
+}
+
+function irAHistorialDesdeModal() {
+    const modal = document.getElementById("modal-success");
+    if (modal) modal.style.display = "none";
+    limpiarFormulario();
+    switchTab("historial");
+}
+
+function reimprimirDesdeModal() {
+    window.print();
 }
 
 // 7. Navegación entre Pestañas
