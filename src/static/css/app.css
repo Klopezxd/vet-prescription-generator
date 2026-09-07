@@ -550,6 +550,73 @@ body {
 }
 
 /* ==========================================================================
+   Modales y Notificaciones (Feedback de Emisión y Acciones)
+   ========================================================================== */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.15s ease-out;
+}
+
+.modal-dialog {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 2rem 1.75rem;
+    max-width: 520px;
+    width: 90%;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    animation: scaleIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.92); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.toast-container {
+    position: fixed;
+    top: 1.25rem;
+    right: 1.25rem;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    pointer-events: none;
+}
+
+.toast {
+    background: #1e293b;
+    color: #ffffff;
+    padding: 0.85rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    pointer-events: auto;
+    border-left: 5px solid #16a34a;
+    transition: opacity 0.3s ease;
+}
+
+/* ==========================================================================
    REGLAS EXCLUSIVAS DE IMPRESIÓN (@media print)
    ========================================================================== */
 
@@ -567,12 +634,14 @@ body {
         font-family: Arial, Helvetica, sans-serif !important;
     }
 
-    /* Ocultar toda la interfaz interactiva */
+    /* Ocultar toda la interfaz interactiva, modales y avisos */
     .navbar,
     .left-panel,
     .preview-toolbar,
     .view-section,
-    .action-buttons {
+    .action-buttons,
+    .modal-overlay,
+    .toast-container {
         display: none !important;
     }
 
