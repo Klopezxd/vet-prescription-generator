@@ -18,27 +18,34 @@ dist/
 *.pkg
 *.spec
 *.manifest
+*.bin
 
 # Datos clínicos, bases de datos y registros (Privacidad médica Agrocalidad)
 recetas.db
 *.db
 *.sqlite
 *.sqlite3
+*.bak
 contador_recetas.txt
 Recetas_Word/
 Recetas_PDF/
-
-# Plantilla real con datos personales y membrete privado
 plantilla_receta.docx
+*.docx
+*.pdf
 
 # Archivos de depuración, logs y temporales de Office
 *.log
 *.tmp
 ~$*.docx
+~$*
 
 # Entornos de desarrollo e IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
 

@@ -2,7 +2,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg?logo=fastapi&logoColor=white)
-![UI](https://img.shields.io/badge/UI-HTML5%20%7C%20CSS%20Print%20%7C%20Tkinter-E34F26.svg)
+![UI](https://img.shields.io/badge/UI-HTML5%20%7C%20CSS%20Print-E34F26.svg)
 ![Database](https://img.shields.io/badge/Database-SQLite3-003B57.svg?logo=sqlite&logoColor=white)
 ![Impresion](https://img.shields.io/badge/Impresi%C3%B3n-A4%20Horizontal%20(50ms)-brightgreen.svg)
 ![Linter](https://img.shields.io/badge/Linter-Ruff-000000.svg?logo=ruff&logoColor=white)
@@ -25,7 +25,8 @@ Esta plataforma fue diseñada para agilizar y digitalizar el flujo de trabajo en
 
 2. **Numeración Secuencial Inalterable y Auditoría (SQLite):**
    * Correlativo atómico autoincremental (`0001`, `0002`, ...) protegido a nivel de base de datos.
-   * Búsqueda instantánea de recetas anteriores por nombre de cliente, paciente o fármaco administrado ante inspecciones sanitarias o reclamos post-venta.
+   * Modificación, anulación oficial y eliminación de registros históricos sin desfasar la numeración.
+   * Descarga y restauración de copias de seguridad de la base de datos en 1 clic.
 
 ---
 
@@ -33,37 +34,29 @@ Esta plataforma fue diseñada para agilizar y digitalizar el flujo de trabajo en
 
 ```mermaid
 flowchart TD
-    subgraph Frontend["Interfaz de Usuario (Web o Desktop)"]
-        UI_Web["Interfaz Web Moderna<br>(FastAPI + HTML5 + CSS Print)"]
-        UI_Desk["Interfaz de Escritorio Legacy<br>(Tkinter)"]
+    subgraph Frontend["Interfaz de Usuario"]
+        UI["Interfaz Web / Modo Escritorio<br>(HTML5 + CSS Print + JS Reactivo)"]
     end
 
     subgraph Backend["Capa de Negocio y Control"]
         API["FastAPI App (src/api.py)"]
-        Engine["PrescriptionEngine (src/generator.py)"]
+        Desktop["Lanzador Nativo (desktop.py / main.py)"]
     end
 
     subgraph Storage["Persistencia y Auditoría"]
         DB[(SQLite3: recetas.db)]
-        Meta[(Metadatos y Configuración)]
+        Meta[(Configuración del Veterinario)]
     end
 
-    subgraph Outputs["Salidas y Despacho"]
-        Print["Impresión Directa A4 Paisaje<br>(Nativa navegador / Cero dependencias)"]
-        Docx["Exportación Word (DOCX)"]
-        Pdf["Exportación PDF (docx2pdf)"]
+    subgraph Output["Salida Vectorial"]
+        Print["Impresión Directa A4 Horizontal<br>(Nativa del sistema / Cero dependencias)"]
     end
 
-    UI_Web -->|REST / JSON| API
-    UI_Desk -->|Llamada Directa| Engine
-
-    API <-->|Correlativo y Registros| DB
-    API <-->|Datos del Veterinario| Meta
-    Engine <-->|Correlativo y Registros| DB
-
-    API -->|Render HTML/CSS| Print
-    Engine -->|XML Replacement| Docx
-    Docx -.->|Conversión opcional| Pdf
+    UI -->|Peticiones REST / JSON| API
+    Desktop -->|Inicia Servidor y App Mode| API
+    API <-->|Correlativo, CRUD y Auditoría| DB
+    API <-->|Datos del Profesional| Meta
+    UI -->|Diálogo de Impresión Instantáneo| Print
 ```
 
 ---
@@ -73,20 +66,20 @@ flowchart TD
 * ⚡ **Previsualización en Tiempo Real (WYSIWYG):** Mientras se digita la información en el formulario, el documento oficial de dos cuerpos se actualiza instantáneamente en pantalla con el diseño exacto que saldrá de la impresora.
 * 🐾 **Chips de Especie Rápida:** Botones de acceso directo con un clic para especies frecuentes: Bovino, Porcino, Equino, Canino, Felino, Ovino, Caprino y Aves.
 * 🖨️ **Impresión Ultrarrápida sin Microsoft Word:** Diseñado con estándares CSS Print (`@page { size: A4 landscape; margin: 4mm; }`), imprime o guarda en PDF vectorial en menos de 50 milisegundos desde cualquier navegador.
+* ✏️ **Módulo Completo de Gestión Histórica:**
+  * **Editar:** Permite corregir errores de digitación en recetas pasadas conservando su número secuencial.
+  * **Anular (Agrocalidad):** Marca la receta como anulada con motivo de auditoría sin dejar huecos en la numeración correlativa.
+  * **Eliminar:** Borra registros de prueba.
+* 📦 **Copias de Seguridad y Restauración:** Botones en la interfaz para descargar un respaldo completo de la base de datos (`.db`) o restaurar una copia previa al cambiar de equipo.
 * 👨‍⚕️ **Perfil del Médico Veterinario Configurable:** Pestaña de ajustes para almacenar en SQLite el nombre del profesional, Cédula de Identidad, Registro SENESCYT, teléfono y nombre del establecimiento o clínica.
-* 🔍 **Módulo de Auditoría y Búsqueda:** Historial completo con filtrado en tiempo real por número de receta, propietario, paciente o medicamento recetado.
-* 🌐 **Compatibilidad en Red Local:** Permite emitir recetas desde computadoras de mostrador, laptops o tablets conectadas a la misma red WiFi del local.
-* 🔒 **Privacidad de Datos Clínicos:** La base de datos (`recetas.db`), documentos emitidos y membretes con firmas están rigurosamente excluidos en `.gitignore`.
-* 💻 **Modo Dual:** Interfaz Web moderna recomendada + Interfaz de escritorio Tkinter clásica disponible.
+* 🔒 **Privacidad de Datos Clínicos:** La base de datos (`recetas.db`), backups y documentos emitidos están rigurosamente excluidos en `.gitignore`.
 
 ---
 
 ## 📋 Requisitos del Sistema
 
-* **Sistema Operativo:** Windows 10 / 11 (o Linux/macOS para el modo web).
-* **Python:** 3.10 o superior instalado.
-* **Navegador Web:** Chrome, Edge, Firefox, Brave o cualquier navegador moderno.
-* *(Opcional)* Microsoft Word: Requerido únicamente si se utiliza la interfaz clásica Tkinter con conversión automática a PDF vía `docx2pdf`.
+* **Para Desarrolladores:** Python 3.10 o superior.
+* **Para el Usuario Final (con el `.exe`):** Windows 10 u 11 (no requiere tener Python instalado).
 
 ---
 
@@ -109,30 +102,25 @@ pip install -r requirements.txt
 
 ### 2. Ejecutar la Aplicación
 
-#### Opción A: Ejecutable Portable de Escritorio (Recomendado para Usuario Final / Mostrador)
-* **100% Autónomo:** No requiere instalar Python ni librerías en la máquina de destino.
-* **Cero Consolas:** Abre directamente una ventana nativa de aplicación (`--noconsole`) con el icono oficial veterinario.
-* **Ubicación:** Haz doble clic en el archivo generado:
+#### Opción A: Ejecutable Portable de Escritorio (Recomendado para Usuario Final)
+* **100% Autónomo:** No requiere instalar Python en la máquina destino.
+* Haz doble clic en el archivo generado localmente en:
   ```text
   dist/Recetario_Agrocalidad.exe
   ```
-  *(Puedes copiar este único archivo `.exe` al Escritorio de cualquier PC con Windows 10/11 y funcionará al instante).*
-* **Compilación:** Para regenerar el ejecutable tras cualquier cambio en el código, haz doble clic en **`build_exe.bat`**.
+* *(Para regenerar el ejecutable tras cualquier cambio en el código, haz doble clic en **`build_exe.bat`**).*
 
-#### Opción B: Inicio Rápido de Servidor Local (Windows)
-Haz doble clic sobre el archivo **`iniciar_recetario.bat`**. 
-El script activará el entorno virtual, iniciará el servidor local y abrirá automáticamente tu navegador en `http://localhost:8000`.
+#### Opción B: Inicio con Python (Modo Escritorio)
+```powershell
+python main.py
+```
+*O haz doble clic sobre el archivo **`iniciar_recetario.bat`**.*
 
-#### Opción C: Inicio Manual por Terminal (Modo Web)
+#### Opción C: Inicio Manual por Terminal (Modo Servidor Web)
 ```powershell
 python -m uvicorn src.api:app --reload --host 0.0.0.0 --port 8000
 ```
 Luego abre en tu navegador: **`http://localhost:8000`**
-
-#### Opción D: Modo Clásico de Escritorio (Tkinter)
-```powershell
-python main.py
-```
 
 ---
 
@@ -144,33 +132,29 @@ vet-prescription-generator/
 │   └── workflows/
 │       └── lint.yml             # Integración continua con Ruff
 ├── assets/
-│   ├── app_icon.ico             # Icono oficial veterinario multirresolución
-│   └── plantilla_ejemplo.docx   # Plantilla base sanitizada para modo Word
+│   └── app_icon.ico             # Icono oficial veterinario multirresolución
 ├── src/
 │   ├── __init__.py
 │   ├── api.py                   # API REST y servidor web FastAPI
 │   ├── config.py                # Rutas dinámicas y compatibilidad PyInstaller
 │   ├── database.py              # Capa de persistencia SQLite y auditoría
-│   ├── generator.py             # Motor de renderizado DOCX/PDF
-│   ├── gui.py                   # Interfaz gráfica de escritorio Tkinter
 │   ├── static/
 │   │   ├── css/
 │   │   │   └── app.css          # Estilos de pantalla y reglas @media print A4
 │   │   └── js/
-│   │       └── app.js           # Lógica interactiva y comunicación con la API
+│   │       └── app.js           # Lógica interactiva, CRUD y comunicación con la API
 │   └── templates/
 │       └── index.html           # Vista principal con formulario y hoja oficial
 ├── build_exe.bat                # Script de compilación automática del ejecutable
 ├── desktop.py                   # Lanzador de escritorio nativo (FastAPI + App Mode)
 ├── iniciar_recetario.bat        # Lanzador web para Windows (1 clic)
-├── main.py                      # Punto de entrada para el modo Tkinter
+├── main.py                      # Punto de entrada principal en Python
 ├── pyproject.toml               # Configuración del linter Ruff (PEP 8)
 ├── requirements.txt             # Dependencias del proyecto
-├── .gitignore                   # Excluye recetas emitidas, base de datos y firmas
+├── .gitignore                   # Excluye recetas emitidas, binarios y base de datos
 ├── LICENSE                      # Licencia de código abierto MIT
 └── README.md                    # Documentación técnica y funcional
 ```
-
 
 ---
 
@@ -187,4 +171,5 @@ El proyecto aplica estándares estrictos de desarrollo:
 
 * **Desarrollador:** [Klever López](https://github.com/Klopezxd)
 * **Licencia:** Distribuido bajo la [Licencia MIT](LICENSE). Libre para uso comercial, agropecuario y adaptaciones clínicas.
+
 

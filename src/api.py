@@ -16,7 +16,7 @@ from src.config import AppConfig
 from src.database import DatabaseManager
 
 config = AppConfig()
-db = DatabaseManager(config.db_path, config.counter_path)
+db = DatabaseManager(config.db_path)
 
 app = FastAPI(
     title="Recetario Veterinario - Agrocalidad Ecuador",
@@ -111,8 +111,6 @@ async def create_prescription(data: PrescriptionCreate) -> dict[str, Any]:
         diagnostico=data.diagnostico,
         posologia=data.posologia,
         instrucciones=data.instrucciones,
-        ruta_docx="",
-        ruta_pdf="",
     )
 
     return {

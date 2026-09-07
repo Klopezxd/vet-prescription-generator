@@ -14,9 +14,8 @@ logger = logging.getLogger("recipe_database")
 class DatabaseManager:
     """Gestiona la conexión y operaciones en la base de datos SQLite."""
 
-    def __init__(self, db_path: Path, counter_file_path: Path | None = None) -> None:
+    def __init__(self, db_path: Path) -> None:
         self.db_path = db_path
-        self.counter_file_path = counter_file_path
         self._init_db()
 
     def _get_connection(self) -> sqlite3.Connection:
@@ -26,7 +25,7 @@ class DatabaseManager:
         return conn
 
     def _init_db(self) -> None:
-        """Inicializa las tablas y realiza migración del archivo contador plano si es necesario."""
+        """Inicializa las tablas del sistema."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
 
@@ -80,23 +79,6 @@ class DatabaseManager:
             except sqlite3.OperationalError:
                 pass
 
-
-            # Migración inicial desde archivo contador_recetas.txt (si existe historial previo)
-            if self.counter_file_path and self.counter_file_path.exists():
-                try:
-                    raw = self.counter_file_path.read_text(encoding="utf-8").strip()
-                    if raw.isdigit():
-                        file_counter = int(raw)
-                        cursor.execute("SELECT value FROM app_metadata WHERE key = 'last_counter'")
-                        row = cursor.fetchone()
-                        if not row:
-                            cursor.execute(
-                                "INSERT INTO app_metadata (key, value) VALUES ('last_counter', ?)",
-                                (str(file_counter),)
-                            )
-                except Exception as e:
-                    logger.warning("No se pudo migrar el contador plano: %s", e)
-
             conn.commit()
 
     def get_next_recipe_number(self) -> int:
@@ -131,8 +113,8 @@ class DatabaseManager:
         diagnostico: str,
         posologia: str,
         instrucciones: str,
-        ruta_docx: str,
-        ruta_pdf: str | None = None
+        ruta_docx: str = "",
+        ruta_pdf: str = ""
     ) -> int:
         """Guarda la receta emitida en la base de datos y actualiza el contador."""
         with self._get_connection() as conn:
@@ -178,13 +160,6 @@ class DatabaseManager:
                 (str(numero_entero),)
             )
             conn.commit()
-
-            # Respaldo en archivo contador_recetas.txt para interoperabilidad
-            if self.counter_file_path:
-                try:
-                    self.counter_file_path.write_text(str(numero_entero), encoding="utf-8")
-                except Exception as e:
-                    logger.warning("No se pudo actualizar el archivo de texto del contador: %s", e)
 
             return cursor.lastrowid or 0
 
