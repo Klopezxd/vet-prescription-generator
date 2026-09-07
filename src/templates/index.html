@@ -28,6 +28,15 @@
         <section class="left-panel">
             <form id="recipe-form" onsubmit="event.preventDefault(); emitirReceta();">
 
+                <!-- Banner de Modo Edición -->
+                <div id="edit-banner" style="display: none; background: #fef3c7; border: 1px solid #f59e0b; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; align-items: center; justify-content: space-between;">
+                    <div>
+                        <strong style="color: #92400e; font-size: 0.95rem;">✏️ Modo Edición: Receta N° <span id="edit-receta-num"></span></strong>
+                        <div style="font-size: 0.8rem; color: #b45309;">Modificando datos existentes sin alterar el correlativo oficial.</div>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="cancelarEdicion()">✕ Cancelar</button>
+                </div>
+
                 <!-- 1. Fecha de Emisión -->
                 <div class="form-card">
                     <div class="form-card-title">📅 Fecha de Emisión</div>
@@ -140,7 +149,7 @@
                 <!-- Botones de Acción -->
                 <div class="action-buttons">
                     <button type="button" class="btn btn-secondary" onclick="limpiarFormulario()">🧹 Limpiar</button>
-                    <button type="submit" class="btn btn-primary">🖨️ EMITIR E IMPRIMIR RECETA</button>
+                    <button type="submit" id="btn-submit-recipe" class="btn btn-primary">🖨️ EMITIR E IMPRIMIR RECETA</button>
                 </div>
 
             </form>
@@ -345,17 +354,18 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th style="width: 100px;">N° Receta</th>
-                        <th style="width: 110px;">Fecha</th>
+                        <th style="width: 90px;">N° Receta</th>
+                        <th style="width: 100px;">Fecha</th>
                         <th>Propietario</th>
                         <th>Paciente / Especie</th>
                         <th>Prescripción</th>
-                        <th style="width: 110px; text-align: center;">Acción</th>
+                        <th style="width: 100px; text-align: center;">Estado</th>
+                        <th style="width: 190px; text-align: center;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="history-table-body">
                     <tr>
-                        <td colspan="6" class="empty-state">Cargando historial de recetas...</td>
+                        <td colspan="7" class="empty-state">Cargando historial de recetas...</td>
                     </tr>
                 </tbody>
             </table>
@@ -406,9 +416,24 @@
                 <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 1rem;">
                     Descarga una copia completa de la base de datos local con todas las recetas y configuraciones para guardarla en una memoria USB o disco externo.
                 </p>
-                <a href="/api/backup-db" download class="btn" style="display: inline-flex; align-items: center; gap: 0.5rem; background: #0284c7; color: white; width: auto; padding: 0.6rem 1.25rem; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem;">
-                    📥 Descargar Copia de Seguridad (.db)
-                </a>
+                <div style="margin-bottom: 1.5rem;">
+                    <a href="/api/backup-db" download class="btn" style="display: inline-flex; align-items: center; gap: 0.5rem; background: #0284c7; color: white; width: auto; padding: 0.6rem 1.25rem; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem;">
+                        📥 Descargar Copia de Seguridad (.db)
+                    </a>
+                </div>
+
+                <hr style="margin: 1.25rem 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+                <h3 style="font-size: 1.1rem; color: #1e293b; margin-bottom: 0.5rem;">📤 Restaurar Base de Datos</h3>
+                <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 1rem;">
+                    Selecciona un archivo <code>.db</code> respaldado previamente para restaurar todas tus recetas en caso de migrar a otra computadora.
+                </p>
+                <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                    <input type="file" id="restore-file-input" accept=".db,.sqlite,.sqlite3" class="form-input" style="max-width: 320px; padding: 0.4rem 0.75rem;">
+                    <button type="button" class="btn btn-secondary" onclick="restaurarBaseDatos()" style="width: auto; padding: 0.6rem 1.25rem;">
+                        📤 Cargar y Restaurar
+                    </button>
+                </div>
             </div>
         </div>
     </section>

@@ -60,6 +60,8 @@ class DatabaseManager:
                     instrucciones TEXT,
                     ruta_docx TEXT,
                     ruta_pdf TEXT,
+                    estado TEXT DEFAULT 'EMITIDA',
+                    motivo_anulacion TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
             """)
@@ -67,6 +69,17 @@ class DatabaseManager:
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_recetas_numero ON recetas(numero_receta);")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_recetas_propietario ON recetas(nombre_propietario);")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_recetas_fecha ON recetas(fecha_emision);")
+
+            # Migración automática si la tabla ya existía previamente sin estas columnas
+            try:
+                cursor.execute("ALTER TABLE recetas ADD COLUMN estado TEXT DEFAULT 'EMITIDA';")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                cursor.execute("ALTER TABLE recetas ADD COLUMN motivo_anulacion TEXT;")
+            except sqlite3.OperationalError:
+                pass
+
 
             # Migración inicial desde archivo contador_recetas.txt (si existe historial previo)
             if self.counter_file_path and self.counter_file_path.exists():
@@ -251,4 +264,59 @@ class DatabaseManager:
                     (key, str(val).strip())
                 )
             conn.commit()
+
+    def update_prescription(self, recipe_id: int, data: dict[str, Any]) -> bool:
+        """Actualiza los datos de una receta existente conservando su número correlativo."""
+        fecha_completa = f"{data.get('dia', '')}/{data.get('mes', '')}/{data.get('anio', '')}"
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE recetas
+                SET dia = ?, mes = ?, anio = ?, fecha_emision = ?,
+                    especie = ?, nombre_paciente = ?, sexo = ?, edad = ?,
+                    nombre_propietario = ?, direccion_propietario = ?,
+                    prescripcion = ?, diagnostico = ?, posologia = ?, instrucciones = ?
+                WHERE id = ?
+                """,
+                (
+                    str(data.get("dia", "")).strip(),
+                    str(data.get("mes", "")).strip(),
+                    str(data.get("anio", "")).strip(),
+                    fecha_completa,
+                    str(data.get("especie", "")).strip(),
+                    str(data.get("nombre_paciente", "No aplica")).strip(),
+                    str(data.get("sexo", "Macho")).strip(),
+                    str(data.get("edad", "No especificada")).strip(),
+                    str(data.get("nombre_propietario", "")).strip(),
+                    str(data.get("direccion_propietario", "Particular")).strip(),
+                    str(data.get("prescripcion", "")).strip(),
+                    str(data.get("diagnostico", "Evaluación clínica")).strip(),
+                    str(data.get("posologia", "")).strip(),
+                    str(data.get("instrucciones", "Sin novedades")).strip(),
+                    recipe_id,
+                ),
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+
+    def cancel_prescription(self, recipe_id: int, motivo: str = "Anulada por usuario") -> bool:
+        """Marca una receta como ANULADA para control oficial de Agrocalidad sin generar saltos."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE recetas SET estado = 'ANULADA', motivo_anulacion = ? WHERE id = ?",
+                (motivo.strip(), recipe_id),
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+
+    def delete_prescription(self, recipe_id: int) -> bool:
+        """Elimina físicamente una receta de la base de datos."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM recetas WHERE id = ?", (recipe_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+
 
