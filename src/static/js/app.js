@@ -515,3 +515,13 @@ async function restaurarBaseDatos() {
         alert("❌ Error de comunicación al restaurar: " + err);
     }
 }
+
+// 11. Heartbeat y Cierre Limpio de la Aplicación de Escritorio
+setInterval(() => {
+    fetch('/api/heartbeat').catch(() => {});
+}, 2500);
+
+window.addEventListener('beforeunload', () => {
+    navigator.sendBeacon('/api/shutdown');
+});
+

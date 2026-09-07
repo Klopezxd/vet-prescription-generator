@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
-using System.Threading;
 using RecetarioAgrocalidad.Database;
 using RecetarioAgrocalidad.Server;
 
@@ -30,21 +29,13 @@ public static class Program
             var server = new HttpServer(db, Port);
             server.Start();
 
-            // 3. Abrir ventana de escritorio nativa
-            var browserProcess = LaunchBrowserApp(TargetUrl);
+            // 3. Abrir ventana de escritorio en modo aplicación
+            LaunchBrowserApp(TargetUrl);
 
-            if (browserProcess != null)
-            {
-                // Esperar a que el usuario cierre la ventana del programa
-                browserProcess.WaitForExit();
-            }
-            else
-            {
-                // Si abrió en navegador predeterminado del sistema, esperar señal
-                Thread.Sleep(Timeout.Infinite);
-            }
+            // 4. Mantener la aplicación viva mientras la ventana esté abierta
+            server.WaitForShutdown();
 
-            // 4. Detener servidor limpiamente al salir
+            // 5. Detener servidor limpiamente al salir
             server.Stop();
         }
         catch (Exception ex)
@@ -103,34 +94,36 @@ public static class Program
         return null;
     }
 
-    private static Process? LaunchBrowserApp(string url)
+    private static void LaunchBrowserApp(string url)
     {
         string? browserExe = FindBrowserExecutable();
         if (!string.IsNullOrEmpty(browserExe))
         {
-            string profileDir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "RecetarioAgrocalidad",
-                "profile"
-            );
-            Directory.CreateDirectory(profileDir);
-
-            var psi = new ProcessStartInfo
+            try
             {
-                FileName = browserExe,
-                Arguments = $"--app={url} --user-data-dir=\"{profileDir}\" --window-size=1300,850",
-                UseShellExecute = false
-            };
-
-            return Process.Start(psi);
+                // Iniciar mediante el shell de Windows para integrarse con la instancia activa sin errores de Singleton ni bloqueos
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = $"/c start \"\" \"{browserExe}\" --app={url} --window-size=1300,850",
+                    CreateNoWindow = true,
+                    UseShellExecute = false
+                };
+                Process.Start(psi);
+                return;
+            }
+            catch { }
         }
 
         // Fallback al navegador predeterminado
-        Process.Start(new ProcessStartInfo
+        try
         {
-            FileName = url,
-            UseShellExecute = true
-        });
-        return null;
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
+        }
+        catch { }
     }
 }
