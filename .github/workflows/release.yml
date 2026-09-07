@@ -48,7 +48,7 @@ jobs:
         with:
           name: Recetario_Agrocalidad_win-x64
           path: dist/Recetario_Agrocalidad.exe
-          retention-days: 90
+          retention-days: 7
 
       - name: Determinar Tag y Título de Versión
         id: get_tag
