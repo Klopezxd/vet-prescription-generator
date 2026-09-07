@@ -20,6 +20,9 @@ public class HttpServer
     private readonly int _port;
     private bool _isRunning;
     private readonly string _webRoot;
+    private DateTime _lastHeartbeat = DateTime.UtcNow;
+    private readonly DateTime _startupTime = DateTime.UtcNow;
+    private readonly ManualResetEventSlim _shutdownSignal = new(false);
 
     public HttpServer(DatabaseManager db, int port = 8765)
     {
@@ -39,9 +42,23 @@ public class HttpServer
         Task.Run(ListenLoop);
     }
 
+    public void WaitForShutdown()
+    {
+        while (!_shutdownSignal.Wait(TimeSpan.FromSeconds(1)))
+        {
+            // Período de gracia inicial de 30 segundos, luego si no hay heartbeat por 10s -> salir
+            if ((DateTime.UtcNow - _startupTime).TotalSeconds > 30 &&
+                (DateTime.UtcNow - _lastHeartbeat).TotalSeconds > 10)
+            {
+                break;
+            }
+        }
+    }
+
     public void Stop()
     {
         _isRunning = false;
+        _shutdownSignal.Set();
         try
         {
             _listener.Stop();
@@ -124,6 +141,22 @@ public class HttpServer
 
     private async Task HandleApiRoute(string path, HttpListenerRequest req, HttpListenerResponse res)
     {
+        // GET /api/heartbeat
+        if (req.HttpMethod == "GET" && path.Equals("/api/heartbeat", StringComparison.OrdinalIgnoreCase))
+        {
+            _lastHeartbeat = DateTime.UtcNow;
+            await SendJson(res, new GenericResponse { Status = "alive" }, AppJsonContext.Default.GenericResponse);
+            return;
+        }
+
+        // POST /api/shutdown
+        if ((req.HttpMethod == "POST" || req.HttpMethod == "GET") && path.Equals("/api/shutdown", StringComparison.OrdinalIgnoreCase))
+        {
+            _shutdownSignal.Set();
+            await SendJson(res, new GenericResponse { Status = "shutting_down" }, AppJsonContext.Default.GenericResponse);
+            return;
+        }
+
         // GET /api/next-number
         if (req.HttpMethod == "GET" && path.Equals("/api/next-number", StringComparison.OrdinalIgnoreCase))
         {
