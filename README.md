@@ -8,7 +8,7 @@
 ![Database](https://img.shields.io/badge/Database-SQLite3%20WAL-003B57.svg?logo=sqlite&logoColor=white)
 ![Binary](https://img.shields.io/badge/Tama%C3%B1o%20Exe-13%20MB%20(Single--File)-brightgreen.svg)
 ![QA Tests](https://img.shields.io/badge/Tests-28%20Aprobados%20(100%25)-success.svg)
-![License](https://img.shields.io/badge/License-PolyForm Noncommercial 1.0.0-green.svg)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm_Noncommercial_1.0.0-orange.svg)](LICENSE)
 
 > **Sistema clínico y comercial autónomo de alto rendimiento para la emisión secuencial, previsualización en vivo, auditoría local e impresión física de recetas médico-veterinarias conforme a la normativa oficial de Agrocalidad (Ecuador).**
 
@@ -132,6 +132,13 @@ dotnet test tests/RecetarioAgrocalidad.Tests/RecetarioAgrocalidad.Tests.csproj
 
 ---
 
-## 📄 Licencia
+## 📄 Licencia y Derechos de Uso
 
-Este proyecto está bajo la Licencia PolyForm Noncommercial 1.0.0. Consulta el archivo `LICENSE` para más detalles.
+Este proyecto se publica como demostración técnica y de arquitectura para **portafolio profesional**.
+
+Está protegido bajo los términos de la **[PolyForm Noncommercial License 1.0.0](LICENSE)**:
+* ✅ **Permitido:** Inspección de código, clonación y ejecución local para fines educativos, académicos, de prueba y evaluación técnica/profesional.
+* ❌ **Estrictamente Prohibido:** Cualquier forma de uso comercial, lucro directo o indirecto, monetización, reventa, sublicenciamiento o inclusión en productos o servicios de pago sin autorización previa por escrito del autor.
+
+> **¿Interesado en una licencia comercial o personalizada para tu clínica o empresa?**  
+> Todos los derechos comerciales están reservados exclusivamente para el autor. Para consultas sobre licenciamiento comercial, soporte o adaptaciones a medida, puedes contactar a **Klever López**.
